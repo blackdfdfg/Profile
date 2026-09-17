@@ -300,8 +300,46 @@
       }
 
       setTransforms();
-      rafId = requestAnimationFrame(tick);
+      if (running) rafId = requestAnimationFrame(tick);
+      else rafId = null;
     }
+
+    /* ---------------------------------------------
+       Pause the physics loop when the card is off-screen or the tab is hidden.
+       A never-ending rAF loop writing transforms + shadows is a real battery
+       and scroll-jank cost on phones.
+       --------------------------------------------- */
+    var running = true;
+
+    function startLoop() {
+      if (running && rafId !== null) return;
+      running = true;
+      last = performance.now();
+      if (rafId === null) rafId = requestAnimationFrame(tick);
+    }
+
+    function stopLoop() {
+      running = false;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    if ('IntersectionObserver' in window) {
+      var visObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) startLoop();
+          else stopLoop();
+        });
+      }, { threshold: 0 });
+      visObs.observe(idCard);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) stopLoop();
+      else startLoop();
+    });
 
     /* desired string stretch, recomputed while dragging */
     var dragStartX = 0, dragStartY = 0;

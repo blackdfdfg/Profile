@@ -183,9 +183,12 @@ button { font-family: inherit; }
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.85;
+  /* Lower blur radius + translate3d keeps these on the GPU compositor.
+     Very large blurs (90px+) are extremely expensive on mobile. */
+  filter: blur(52px);
+  opacity: 0.8;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .orb-1 {
@@ -239,8 +242,12 @@ button { font-family: inherit; }
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   border: 1px solid var(--glass-border-soft);
   border-radius: 22px;
+  /* deeper 3D: bright top bevel, dark bottom edge, soft outer float */
   box-shadow:
-    0 8px 32px var(--glass-shadow),
+    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 -18px 30px -22px rgba(0, 0, 0, 0.9) inset,
+    0 12px 30px -12px rgba(0, 0, 0, 0.55),
+    0 30px 60px -30px rgba(0, 0, 0, 0.75),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition:
     transform 0.45s cubic-bezier(0.23, 1, 0.32, 1),
@@ -251,17 +258,25 @@ button { font-family: inherit; }
   isolation: isolate;
 }
 
-/* Light passing through — soft accent halo inside the glass */
+/* Light passing through — the visible colourful backing under the glass.
+   This is what gives the "background underneath the pane" look. */
 .glass-card::before {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: -20% -10%;
   background:
-    radial-gradient(120% 90% at 12% 0%, rgba(var(--accent-rgb), 0.16), transparent 60%),
-    radial-gradient(90% 80% at 100% 100%, rgba(var(--accent-2-rgb), 0.12), transparent 55%);
+    radial-gradient(58% 62% at 8% 4%, rgba(var(--accent-rgb), 0.55), transparent 62%),
+    radial-gradient(52% 58% at 96% 96%, rgba(var(--accent-2-rgb), 0.45), transparent 60%),
+    radial-gradient(44% 50% at 82% 8%, rgba(6, 182, 212, 0.32), transparent 62%);
   pointer-events: none;
   z-index: 0;
-  opacity: 0.9;
+  opacity: 0.85;
+  filter: blur(6px);
+}
+
+[data-theme="light"] .glass-card::before {
+  opacity: 0.6;
+  filter: blur(8px);
 }
 
 /* Rim light on the edges (gradient border via mask) */
@@ -330,23 +345,28 @@ button { font-family: inherit; }
   border: 1px solid transparent;
   overflow: hidden;
   isolation: isolate;
-  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1),
-              box-shadow 0.3s ease,
-              background 0.3s ease,
-              border-color 0.3s ease;
+  transform: translateZ(0);
+  transition: transform 0.28s cubic-bezier(0.23, 1, 0.32, 1),
+              box-shadow 0.28s ease,
+              background 0.28s ease,
+              border-color 0.28s ease;
   white-space: nowrap;
 }
 
-/* top glass highlight */
+/* top glass highlight — the strong upper bevel that sells the 3D look */
 .btn::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 52%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
-  border-radius: 999px 999px 40% 40%;
+  height: 54%;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.75) 0%,
+    rgba(255, 255, 255, 0.22) 45%,
+    rgba(255, 255, 255, 0) 100%);
+  border-radius: 999px 999px 45% 45%;
   pointer-events: none;
   z-index: 1;
+  mix-blend-mode: overlay;
 }
 
 /* moving sheen */
@@ -354,56 +374,77 @@ button { font-family: inherit; }
   content: '';
   position: absolute;
   top: 0; left: -120%;
-  width: 60%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  width: 55%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
   transform: skewX(-20deg);
-  transition: left 0.6s ease;
+  transition: left 0.65s cubic-bezier(0.23, 1, 0.32, 1);
   pointer-events: none;
   z-index: 1;
 }
-.btn:hover::after { left: 140%; }
+.btn:hover::after { left: 150%; }
 
 .btn > * { position: relative; z-index: 2; }
+.btn i { position: relative; z-index: 2; }
 
 .btn-primary {
-  background: var(--accent-gradient-btn);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 50%),
+    var(--accent-gradient-btn);
   color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
   box-shadow:
-    0 6px 22px rgba(var(--accent-rgb), 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.22);
+    0 2px 0 rgba(255, 255, 255, 0.5) inset,
+    0 -4px 8px -2px rgba(0, 0, 0, 0.4) inset,
+    0 8px 24px -6px rgba(var(--accent-rgb), 0.65),
+    0 16px 30px -14px rgba(0, 0, 0, 0.8);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-3px) scale(1.05);
   box-shadow:
-    0 12px 36px rgba(var(--accent-rgb), 0.6),
-    0 0 30px rgba(var(--accent-2-rgb), 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -3px 8px rgba(0, 0, 0, 0.22);
+    0 2px 0 rgba(255, 255, 255, 0.6) inset,
+    0 -4px 8px -2px rgba(0, 0, 0, 0.4) inset,
+    0 14px 34px -6px rgba(var(--accent-rgb), 0.8),
+    0 0 34px rgba(var(--accent-2-rgb), 0.45),
+    0 22px 40px -18px rgba(0, 0, 0, 0.85);
 }
 
-.btn-primary:active { transform: translateY(0) scale(0.98); }
+.btn-primary:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 4px 14px -6px rgba(var(--accent-rgb), 0.6);
+}
 
 .btn-secondary {
-  background: var(--glass-bg-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 55%),
+    var(--glass-bg-strong);
   border-color: var(--glass-border);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   color: var(--text-primary);
   box-shadow:
-    0 6px 20px var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -3px 7px -2px rgba(0, 0, 0, 0.35) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.7),
+    0 16px 30px -16px rgba(0, 0, 0, 0.7);
 }
 
 .btn-secondary:hover {
-  transform: translateY(-2px) scale(1.05);
-  background: rgba(var(--accent-rgb), 0.18);
-  border-color: rgba(var(--accent-rgb), 0.4);
+  transform: translateY(-3px) scale(1.05);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 55%),
+    rgba(var(--accent-rgb), 0.22);
+  border-color: rgba(var(--accent-rgb), 0.45);
   box-shadow:
-    0 10px 30px rgba(var(--accent-rgb), 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 -3px 7px -2px rgba(0, 0, 0, 0.35) inset,
+    0 14px 32px -8px rgba(var(--accent-rgb), 0.45),
+    0 0 26px rgba(var(--accent-rgb), 0.25);
 }
+
+.btn-secondary:active { transform: translateY(1px) scale(0.99); }
 
 .btn-small {
   padding: 10px 22px;
@@ -678,7 +719,7 @@ button { font-family: inherit; }
   position: relative;
   perspective: 1000px;
   /* fixed footprint so string stretch never reflows the hero grid */
-  min-height: clamp(400px, 46vw, 540px);
+  min-height: clamp(330px, 40vw, 450px);
 }
 
 /* String is FIXED height; JS stretches it with scaleY (no layout reflow) */
@@ -711,7 +752,7 @@ button { font-family: inherit; }
 
 .id-card {
   position: relative;
-  width: clamp(196px, 19vw, 258px);
+  width: clamp(178px, 17.5vw, 234px);
   transform-origin: top center;
   cursor: grab;
   user-select: none;
@@ -719,23 +760,34 @@ button { font-family: inherit; }
   touch-action: pan-y;
   border-radius: 18px;
   padding: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(22px) saturate(1.6);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  /* NOTE: no backdrop-filter here. This element is transformed every frame by
+     the physics loop; combining that with backdrop-blur forces a full re-blur
+     per frame and causes the mobile scroll/drag lag. We fake the glass with a
+     layered translucent background instead, which composites on the GPU. */
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 45%, rgba(255, 255, 255, 0.1) 100%),
+    radial-gradient(120% 90% at 20% 0%, rgba(var(--accent-rgb), 0.2), transparent 65%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.4),
+    0 10px 40px rgba(0, 0, 0, 0.45),
     0 0 50px var(--idcard-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    inset 0 2px 1px rgba(255, 255, 255, 0.3),
+    inset 0 -14px 26px -18px rgba(0, 0, 0, 0.75);
   overflow: hidden;
   will-change: transform;
-  animation: cardIdle 4.5s ease-in-out infinite alternate;
 }
 .id-card:active { cursor: grabbing; }
 
-@keyframes cardIdle {
-  from { box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 40px var(--idcard-glow), inset 0 1px 0 rgba(255,255,255,0.18); }
-  to   { box-shadow: 0 10px 40px rgba(0,0,0,0.4), 0 0 68px rgba(var(--neon-green-rgb), 0.22), inset 0 1px 0 rgba(255,255,255,0.22); }
+[data-theme="light"] .id-card {
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.68) 48%, rgba(255, 255, 255, 0.82) 100%),
+    radial-gradient(120% 90% at 20% 0%, rgba(var(--accent-rgb), 0.14), transparent 65%);
+  border-color: rgba(255, 255, 255, 1);
+  box-shadow:
+    0 10px 40px rgba(60, 60, 120, 0.2),
+    0 0 40px var(--idcard-glow),
+    inset 0 2px 1px rgba(255, 255, 255, 1),
+    inset 0 -14px 26px -18px rgba(120, 140, 200, 0.5);
 }
 
 /* glossy diagonal sheen */
@@ -778,27 +830,19 @@ button { font-family: inherit; }
   to   { background-position: 0 60px; }
 }
 
-[data-theme="light"] .id-card {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow:
-    0 10px 40px rgba(60, 60, 120, 0.18),
-    0 0 40px var(--idcard-glow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-}
 [data-theme="light"] .id-card::after { mix-blend-mode: normal; opacity: 0.35; }
 
 .id-card-inner {
   position: relative;
   z-index: 2;
-  padding: clamp(11px, 1.3vw, 15px);
+  padding: clamp(10px, 1.15vw, 13px);
 }
 
 .id-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .id-card-label {
@@ -829,15 +873,16 @@ button { font-family: inherit; }
 
 .id-card-photo {
   position: relative;
-  width: clamp(66px, 6.4vw, 88px);
-  height: clamp(66px, 6.4vw, 88px);
-  margin: 0 auto 10px;
-  border-radius: 12px;
+  width: clamp(60px, 5.8vw, 80px);
+  height: clamp(60px, 5.8vw, 80px);
+  margin: 0 auto 9px;
+  border-radius: 11px;
   overflow: hidden;
-  border: 2px solid rgba(var(--neon-green-rgb), 0.5);
+  border: 2px solid rgba(var(--neon-green-rgb), 0.55);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.35),
-    0 0 18px rgba(var(--neon-green-rgb), 0.3);
+    0 4px 18px rgba(0, 0, 0, 0.38),
+    0 0 16px rgba(var(--neon-green-rgb), 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .id-card-photo img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -856,49 +901,55 @@ button { font-family: inherit; }
   100% { top: 105%; }
 }
 
-.id-card-info { text-align: center; margin-bottom: 10px; }
+.id-card-info { text-align: center; margin-bottom: 9px; }
 .id-card-info h3 {
-  font-size: clamp(0.95rem, 1.25vw, 1.15rem);
+  font-size: clamp(0.88rem, 1.15vw, 1.05rem);
   font-weight: 800;
   color: var(--text-heading);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
   margin-bottom: 2px;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 18px rgba(var(--accent-rgb), 0.3);
 }
 .id-card-info p {
-  font-size: clamp(0.6rem, 0.72vw, 0.7rem);
+  font-size: clamp(0.55rem, 0.66vw, 0.64rem);
   color: var(--text-secondary);
-  line-height: 1.45;
-  margin-bottom: 8px;
+  line-height: 1.4;
+  margin-bottom: 7px;
   padding: 0 4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 .id-card-tag {
   display: inline-block;
   position: relative;
-  padding: 4px 12px;
+  padding: 3px 11px;
   border-radius: 999px;
   font-family: var(--mono);
-  font-size: clamp(0.54rem, 0.64vw, 0.62rem);
+  font-size: clamp(0.5rem, 0.58vw, 0.56rem);
   font-weight: 500;
   letter-spacing: 0.5px;
   color: var(--neon-green);
-  background: rgba(var(--neon-green-rgb), 0.12);
-  border: 1px solid rgba(var(--neon-green-rgb), 0.35);
-  text-shadow: 0 0 10px rgba(var(--neon-green-rgb), 0.5);
+  background: rgba(var(--neon-green-rgb), 0.14);
+  border: 1px solid rgba(var(--neon-green-rgb), 0.4);
+  text-shadow: 0 0 10px rgba(var(--neon-green-rgb), 0.6);
+  box-shadow:
+    0 0 14px rgba(var(--neon-green-rgb), 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .id-card-skills {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 9px;
 }
 .id-skill-top {
   display: flex;
   justify-content: space-between;
-  font-size: 0.56rem;
+  font-size: 0.52rem;
   font-family: var(--mono);
   color: var(--text-secondary);
   margin-bottom: 3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .id-skill-bar {
   height: 4px;
@@ -924,11 +975,12 @@ button { font-family: inherit; }
   justify-content: space-between;
   align-items: center;
   font-family: var(--mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.5px;
+  font-size: 0.46rem;
+  letter-spacing: 0.4px;
   color: var(--text-secondary);
-  padding: 7px 0;
+  padding: 6px 0;
   border-top: 1px solid var(--glass-border-soft);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .id-status { display: inline-flex; align-items: center; color: var(--neon-green); }
 .id-status .status-dot { width: 6px; height: 6px; margin-right: 5px; }
@@ -936,17 +988,18 @@ button { font-family: inherit; }
 .id-card-socials {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  padding-bottom: 9px;
+  gap: 7px;
+  padding-bottom: 8px;
 }
 .id-card-socials a {
-  width: 27px; height: 27px;
+  width: 24px; height: 24px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   color: var(--text-secondary);
-  background: var(--glass-bg);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--glass-border-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transition: all 0.3s ease;
 }
 .id-card-socials a:hover {
@@ -960,7 +1013,7 @@ button { font-family: inherit; }
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding-top: 9px;
+  padding-top: 7px;
   border-top: 1px solid var(--glass-border-soft);
 }
 .id-card-barcode { display: flex; flex-direction: column; gap: 3px; }
@@ -968,7 +1021,7 @@ button { font-family: inherit; }
   display: flex;
   gap: 1.5px;
   align-items: stretch;
-  height: 13px;
+  height: 11px;
 }
 .id-card-barcode-lines span {
   display: block;
@@ -1813,7 +1866,7 @@ button { font-family: inherit; }
   .hero-buttons, .hero-socials { justify-content: center; }
   .scroll-hint { display: none; }
 
-  .id-card { width: min(56vw, 235px); }
+  .id-card { width: min(54vw, 205px); }
 
   .about-stats { flex-direction: column; }
   .stat-card { text-align: center; align-items: center; }
@@ -1827,11 +1880,65 @@ button { font-family: inherit; }
   .hero-buttons { flex-direction: column; }
   .hero-buttons .btn { width: 100%; }
   .skills-grid { grid-template-columns: repeat(2, 1fr); }
-  .id-card { width: min(64vw, 215px); }
+  .id-card { width: min(58vw, 188px); }
   .btn { padding: 12px 26px; font-size: 0.88rem; }
   .badge { font-size: 0.74rem; padding: 7px 13px; }
   .showcase-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .portfolio-points { grid-template-columns: 1fr; }
+}
+
+/* ------------------------------------------------------------
+   MOBILE PERFORMANCE MODE
+   Large backdrop blurs and 4 continuously-animating blurred orbs are
+   very costly on phone GPUs (scroll jank). On touch/small screens we
+   swap to opaque-ish backgrounds and keep the orbs static.
+   ------------------------------------------------------------ */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  /* Freeze the background orbs — no per-frame blur recomputation */
+  .orb { animation: none !important; filter: blur(44px); opacity: 0.7; }
+  .grid-overlay { display: none; }
+
+  /* Reduce backdrop blur cost on all glass surfaces */
+  .glass-card,
+  .glass-pane,
+  .navbar,
+  .nav-links,
+  .btn-secondary,
+  .btn-small,
+  .theme-toggle,
+  .social-icon,
+  .contact-link,
+  .form-group input,
+  .form-group textarea {
+    backdrop-filter: blur(9px) saturate(1.2);
+    -webkit-backdrop-filter: blur(9px) saturate(1.2);
+  }
+
+  /* Slightly more opaque so text stays readable without heavy blur */
+  .glass-card { background: rgba(255, 255, 255, 0.1); }
+  [data-theme="light"] .glass-card { background: rgba(255, 255, 255, 0.62); }
+
+  /* Drop the inner blur filter — radial gradients are already soft */
+  .glass-card::before { filter: none; inset: 0; opacity: 0.7; }
+
+  /* The oracle pane tilt + glow is desktop-only candy */
+  .showcase-stage { perspective: none; }
+  .glass-pane { transform: none; }
+  .glass-pane:hover { transform: translateY(-6px); }
+
+  /* Trim expensive inner shadows on the animated card */
+  .id-card {
+    box-shadow:
+      0 8px 26px rgba(0, 0, 0, 0.4),
+      0 0 32px var(--idcard-glow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  /* Disable the pulsing filter animation on the profile ring */
+  .pane-ring { animation: none; }
+  .pane-chart i { animation: none; }
+  .scanline { animation: none; }
+  .id-card::after { animation: none; }
 }
 
 /* Desktop-only: hero two columns hold between 768 and 1200 */
