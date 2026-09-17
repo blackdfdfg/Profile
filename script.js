@@ -146,77 +146,104 @@ const observer = new IntersectionObserver((entries) => {
 fadeEls.forEach(el => observer.observe(el));
 
 /* ============================================
-   HANGING ID CARD — SPRING PHYSICS (FIX 1+2)
+   HANGING ID CARD — DAMPED HARMONIC OSCILLATOR
    ============================================ */
 (function () {
   if (!idCard) return;
 
   const stringEl = idCard.parentElement.querySelector('.id-card-string');
-  const wrapper = idCard.parentElement;
-  const restStringH = 60;
+  const REST_STRING_H = 60;
 
-  /* Spring physics state */
+  /* Damped harmonic oscillator: stiffness, damping, mass */
+  const STIFFNESS = 200;
+  const DAMPING = 14;
+  const MASS = 1;
+  const MAX_ANGLE = 0.55;
+
+  /* Idle sine swing */
+  const IDLE_AMPLITUDE = 0.04;
+  const IDLE_PERIOD = 4000;
+
+  /* State */
   let angle = 0;
-  let angularVelocity = 0;
-  const stiffness = 0.015;
-  const damping = 0.92;
-  const maxAngle = 0.55;
-
+  let velocity = 0;
   let isDragging = false;
   let dragStartX = 0;
-  let dragAngle = 0;
+  let angleAtDragStart = 0;
   let lastTime = performance.now();
-
-  /* Controlled idle swing */
   let idleEnabled = true;
   let idleTime = 0;
-  const idleAmplitude = 0.06;
-  const idleSpeed = 0.0008;
+
+  /* Track recent movement for velocity estimation */
+  let lastDragX = 0;
+  let lastDragTime = 0;
 
   function tick(now) {
-    const rawDt = (now - lastTime) / 16.667;
-    const dt = Math.min(rawDt, 3);
+    const dtMs = Math.min(now - lastTime, 50);
+    const dt = dtMs / 1000;
     lastTime = now;
 
-    if (isDragging) {
-      /* During drag, just follow the finger/mouse */
-    } else if (idleEnabled) {
-      /* Controlled gentle idle swing */
-      idleTime += dt * 16.667;
-      const idleAngle = Math.sin(idleTime * idleSpeed) * idleAmplitude;
-      /* Blend idle with spring physics */
-      const springForce = -stiffness * (angle - idleAngle);
-      angularVelocity += springForce * dt;
-      angularVelocity *= Math.pow(damping, dt);
-      angle += angularVelocity * dt;
-    } else {
-      /* Pure spring physics — returns to center */
-      const springForce = -stiffness * angle;
-      angularVelocity += springForce * dt;
-      angularVelocity *= Math.pow(damping, dt);
-      angle += angularVelocity * dt;
+    if (!isDragging) {
+      if (idleEnabled) {
+        /* Deterministic sine idle swing — additive on top of spring */
+        idleTime += dtMs;
+        const idleTarget = Math.sin((idleTime / IDLE_PERIOD) * Math.PI * 2) * IDLE_AMPLITUDE;
+        const displacement = angle - idleTarget;
+        const springForce = -STIFFNESS * displacement;
+        const dampingForce = -DAMPING * velocity;
+        const acceleration = (springForce + dampingForce) / MASS;
+        velocity += acceleration * dt;
+        angle += velocity * dt;
+      } else {
+        /* Pure spring back to center */
+        const springForce = -STIFFNESS * angle;
+        const dampingForce = -DAMPING * velocity;
+        const acceleration = (springForce + dampingForce) / MASS;
+        velocity += acceleration * dt;
+        angle += velocity * dt;
+
+        /* Re-enable idle once settled */
+        if (Math.abs(angle) < 0.005 && Math.abs(velocity) < 0.01) {
+          angle = 0;
+          velocity = 0;
+          idleEnabled = true;
+          idleTime = 0;
+        }
+      }
     }
 
     /* Clamp */
-    angle = Math.max(-maxAngle, Math.min(maxAngle, angle));
+    angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, angle));
 
     /* Apply rotation */
-    idCard.style.transform = `rotate(${angle}rad) translateY(0)`;
+    idCard.style.transform = 'rotate(' + angle + 'rad)';
 
-    /* Elastic string stretch based on displacement */
-    if (stringEl) {
-      const displacement = Math.abs(angle);
-      const stretch = displacement * 80;
-      const bounce = isDragging ? stretch : stretch * Math.abs(angularVelocity) * 8;
-      const totalH = restStringH + Math.max(0, bounce);
-      stringEl.style.height = totalH + 'px';
-      stringEl.style.transition = isDragging ? 'height 0.1s ease-out' : 'height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    }
+    /* String stretch — based on horizontal drag distance */
+    updateString(dtMs);
 
     requestAnimationFrame(tick);
   }
 
-  requestAnimationFrame(tick);
+  function updateString(dtMs) {
+    if (!stringEl) return;
+    let stretch = 0;
+    if (isDragging) {
+      /* Use horizontal displacement from card center */
+      const rect = idCard.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const dragDist = Math.abs(lastDragX - cardCenterX);
+      stretch = Math.min(dragDist * 0.15, 50);
+    } else {
+      /* Spring back with overshoot via velocity */
+      stretch = Math.abs(velocity) * 15;
+      stretch = Math.min(stretch, 30);
+    }
+    const totalH = REST_STRING_H + stretch;
+    stringEl.style.height = totalH + 'px';
+    stringEl.style.transition = isDragging
+      ? 'height 0.08s linear'
+      : 'height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  }
 
   function getClientXY(e) {
     if (e.touches && e.touches.length > 0) {
@@ -230,8 +257,10 @@ fadeEls.forEach(el => observer.observe(el));
     idleEnabled = false;
     const pos = getClientXY(e);
     dragStartX = pos.x;
-    dragAngle = angle;
-    angularVelocity = 0;
+    lastDragX = pos.x;
+    lastDragTime = performance.now();
+    angleAtDragStart = angle;
+    velocity = 0;
     idCard.style.cursor = 'grabbing';
     e.preventDefault();
   }
@@ -240,9 +269,20 @@ fadeEls.forEach(el => observer.observe(el));
     if (!isDragging) return;
     const pos = getClientXY(e);
     const dx = pos.x - dragStartX;
-    /* Direct 1:1 mapping — drag right = tilt right (positive angle = bottom right) */
-    angle = dragAngle + dx * 0.005;
-    angle = Math.max(-maxAngle, Math.min(maxAngle, angle));
+    lastDragX = pos.x;
+
+    /* Direct mapping: drag right → positive dx → positive angle → bottom swings right */
+    angle = angleAtDragStart + dx * 0.005;
+    angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, angle));
+
+    /* Track velocity for release momentum */
+    const now = performance.now();
+    const elapsed = now - lastDragTime;
+    if (elapsed > 0) {
+      velocity = (pos.x - lastDragX) / elapsed * 2;
+    }
+    lastDragTime = now;
+
     e.preventDefault();
   }
 
@@ -250,29 +290,24 @@ fadeEls.forEach(el => observer.observe(el));
     if (!isDragging) return;
     isDragging = false;
     idCard.style.cursor = 'grab';
-    /* Give a small velocity based on current angle for natural spring-back */
-    angularVelocity = angle * 0.3;
-    /* Re-enable idle swing after spring settles */
-    setTimeout(() => {
-      if (Math.abs(angle) < 0.01 && Math.abs(angularVelocity) < 0.001) {
-        idleEnabled = true;
-        idleTime = 0;
-      }
-    }, 2000);
+    /* Clamp release velocity */
+    velocity = Math.max(-2, Math.min(2, velocity));
   }
 
+  /* Mouse events */
   idCard.addEventListener('mousedown', onDragStart);
   window.addEventListener('mousemove', onDragMove);
   window.addEventListener('mouseup', onDragEnd);
 
+  /* Touch events */
   idCard.addEventListener('touchstart', onDragStart, { passive: false });
   window.addEventListener('touchmove', onDragMove, { passive: false });
   window.addEventListener('touchend', onDragEnd);
 
   /* Initial gentle nudge */
-  setTimeout(() => {
-    angularVelocity = 0.012;
-  }, 1000);
+  setTimeout(() => { velocity = 0.8; }, 1000);
+
+  requestAnimationFrame(tick);
 })();
 
 /* ============================================
