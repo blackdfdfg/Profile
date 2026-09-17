@@ -175,8 +175,8 @@ fadeEls.forEach(el => observer.observe(el));
   let idleTime = 0;
 
   /* Track recent movement for velocity estimation */
-  let lastDragX = 0;
-  let lastDragTime = 0;
+  let prevDragX = 0;
+  let prevDragTime = 0;
 
   function tick(now) {
     const dtMs = Math.min(now - lastTime, 50);
@@ -219,30 +219,30 @@ fadeEls.forEach(el => observer.observe(el));
     idCard.style.transform = 'rotate(' + angle + 'rad)';
 
     /* String stretch — based on horizontal drag distance */
-    updateString(dtMs);
+    updateString();
 
     requestAnimationFrame(tick);
   }
 
-  function updateString(dtMs) {
+  function updateString() {
     if (!stringEl) return;
     let stretch = 0;
     if (isDragging) {
-      /* Use horizontal displacement from card center */
+      /* String stretches based on angular displacement (horizontal component) */
       const rect = idCard.getBoundingClientRect();
-      const cardCenterX = rect.left + rect.width / 2;
-      const dragDist = Math.abs(lastDragX - cardCenterX);
-      stretch = Math.min(dragDist * 0.15, 50);
+      const cardHeight = rect.height;
+      const horizontalDisp = Math.abs(angle) * cardHeight * 0.5;
+      stretch = Math.min(horizontalDisp * 0.35, 60);
     } else {
       /* Spring back with overshoot via velocity */
-      stretch = Math.abs(velocity) * 15;
-      stretch = Math.min(stretch, 30);
+      stretch = Math.abs(velocity) * 18;
+      stretch = Math.min(stretch, 40);
     }
-    const totalH = REST_STRING_H + stretch;
+    const totalH = REST_STRING_H + Math.max(0, stretch);
     stringEl.style.height = totalH + 'px';
     stringEl.style.transition = isDragging
       ? 'height 0.08s linear'
-      : 'height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      : 'height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
   }
 
   function getClientXY(e) {
@@ -257,8 +257,8 @@ fadeEls.forEach(el => observer.observe(el));
     idleEnabled = false;
     const pos = getClientXY(e);
     dragStartX = pos.x;
-    lastDragX = pos.x;
-    lastDragTime = performance.now();
+    prevDragX = pos.x;
+    prevDragTime = performance.now();
     angleAtDragStart = angle;
     velocity = 0;
     idCard.style.cursor = 'grabbing';
@@ -269,19 +269,19 @@ fadeEls.forEach(el => observer.observe(el));
     if (!isDragging) return;
     const pos = getClientXY(e);
     const dx = pos.x - dragStartX;
-    lastDragX = pos.x;
 
     /* Direct mapping: drag right → positive dx → positive angle → bottom swings right */
     angle = angleAtDragStart + dx * 0.005;
     angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, angle));
 
-    /* Track velocity for release momentum */
+    /* Track velocity for release momentum (use PREVIOUS position) */
     const now = performance.now();
-    const elapsed = now - lastDragTime;
-    if (elapsed > 0) {
-      velocity = (pos.x - lastDragX) / elapsed * 2;
+    const elapsed = now - prevDragTime;
+    if (elapsed > 5) {
+      velocity = (pos.x - prevDragX) / elapsed * 3;
+      prevDragX = pos.x;
+      prevDragTime = now;
     }
-    lastDragTime = now;
 
     e.preventDefault();
   }
