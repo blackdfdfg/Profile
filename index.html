@@ -90,7 +90,8 @@
 
         <!-- Hanging ID card -->
         <div class="hero-card-wrapper fade-up">
-          <div class="id-card-string" id="stringEl"><span class="string-clip"></span></div>
+          <span class="string-clip" aria-hidden="true"></span>
+          <div class="id-card-string" id="stringEl"></div>
           <div class="id-card" id="idCard">
             <div class="id-card-inner">
               <div class="id-card-header">
@@ -106,7 +107,7 @@
               <div class="id-card-info">
                 <h3>Asif</h3>
                 <p>Full Stack Developer &amp; Automation Specialist</p>
-                <span class="id-card-tag" data-text="Code. Break. Rebuild.">Code. Break. Rebuild.</span>
+                <span class="id-card-tag">Code. Break. Rebuild.</span>
               </div>
 
               <div class="id-card-skills">
@@ -405,85 +406,102 @@
         </h2>
         <p class="section-intro fade-up">
           I design and build custom portfolio websites for developers, creators, and
-          professionals — including this one you're viewing right now. Below are a few
-          sample projects; details are placeholders until I swap in real case studies.
+          professionals — including this one you're viewing right now. Every layout is built
+          from scratch, shaped around your work, and finished with the same 3D glass
+          treatment you're looking at.
         </p>
 
-        <div class="projects-grid">
-          <div class="glass-card project-card fade-up">
-            <div class="project-image">
-              <img src="assets/images/photo1.jpg" alt="E-Commerce Platform" loading="lazy" />
-            </div>
-            <div class="project-info">
-              <h3>E-Commerce Platform</h3>
-              <p>
-                Full-stack storefront with product catalog, cart, checkout, order tracking,
-                and an admin dashboard for managing inventory and sales.
-              </p>
-              <div class="project-tags">
-                <span class="tag">React</span>
-                <span class="tag">Node.js</span>
-                <span class="tag">MongoDB</span>
+        <!-- 3D glass showcase — visual styles I can build -->
+        <div class="showcase-stage fade-up">
+          <div class="showcase-grid">
+            <article class="glass-pane pane-a">
+              <div class="pane-glow"></div>
+              <div class="pane-ui">
+                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
               </div>
-              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
-            </div>
-          </div>
+              <div class="pane-body">
+                <div class="pane-avatar"></div>
+                <div class="pane-line lg"></div>
+                <div class="pane-line"></div>
+                <div class="pane-line sm"></div>
+              </div>
+              <span class="pane-label">Developer Portfolio</span>
+            </article>
 
-          <div class="glass-card project-card fade-up">
-            <div class="project-image">
-              <img src="assets/images/photo2.jpg" alt="Portfolio Website Builder" loading="lazy" />
-            </div>
-            <div class="project-info">
-              <h3>Portfolio Website Builder</h3>
-              <p>
-                A template-driven builder that generates responsive glassmorphism portfolios
-                from a simple config file — no design skills required.
-              </p>
-              <div class="project-tags">
-                <span class="tag">HTML/CSS</span>
-                <span class="tag">JavaScript</span>
-                <span class="tag">Automation</span>
+            <article class="glass-pane pane-b">
+              <div class="pane-glow"></div>
+              <div class="pane-ui">
+                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
               </div>
-              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
-            </div>
-          </div>
+              <div class="pane-chart">
+                <i style="--h:42%"></i><i style="--h:70%"></i><i style="--h:55%"></i>
+                <i style="--h:88%"></i><i style="--h:64%"></i><i style="--h:78%"></i>
+              </div>
+              <span class="pane-label">Creator Dashboard</span>
+            </article>
 
-          <div class="glass-card project-card fade-up">
-            <div class="project-image">
-              <img src="assets/images/photo3.jpg" alt="Discord Bot Dashboard" loading="lazy" />
-            </div>
-            <div class="project-info">
-              <h3>Discord Bot Dashboard</h3>
-              <p>
-                Web control panel for a multi-server Discord bot — manage modules, roles,
-                moderation rules, and view live activity stats.
-              </p>
-              <div class="project-tags">
-                <span class="tag">Discord.js</span>
-                <span class="tag">Node.js</span>
-                <span class="tag">Firebase</span>
+            <article class="glass-pane pane-c">
+              <div class="pane-glow"></div>
+              <div class="pane-ui">
+                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
               </div>
-              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
-            </div>
-          </div>
+              <div class="pane-cards">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <span class="pane-label">Product Showcase</span>
+            </article>
 
-          <div class="glass-card project-card fade-up">
-            <div class="project-image">
-              <img src="assets/images/profile.svg" alt="Automation Script Collection" loading="lazy" />
-            </div>
-            <div class="project-info">
-              <h3>Automation Script Collection</h3>
-              <p>
-                A growing library of reusable automation scripts for X, Discord, and general
-                workflow tasks — documented and ready to deploy.
-              </p>
-              <div class="project-tags">
-                <span class="tag">Python</span>
-                <span class="tag">APIs</span>
-                <span class="tag">Docker</span>
+            <article class="glass-pane pane-d">
+              <div class="pane-glow"></div>
+              <div class="pane-ui">
+                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
               </div>
-              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
-            </div>
+              <div class="pane-profile">
+                <div class="pane-ring"></div>
+                <div class="pane-line lg"></div>
+                <div class="pane-line"></div>
+              </div>
+              <span class="pane-label">Personal Brand</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="portfolio-points">
+          <div class="glass-card point-card fade-up">
+            <div class="point-icon"><i class="fas fa-pen-ruler"></i></div>
+            <h3>Custom Design</h3>
+            <p>No templates — the layout, colors, and typography are shaped around your work and your personality.</p>
+          </div>
+          <div class="glass-card point-card fade-up">
+            <div class="point-icon"><i class="fas fa-mobile-screen"></i></div>
+            <h3>Fully Responsive</h3>
+            <p>Looks intentional on every screen, from ultrawide monitors down to the smallest phone.</p>
+          </div>
+          <div class="glass-card point-card fade-up">
+            <div class="point-icon"><i class="fas fa-gem"></i></div>
+            <h3>3D Glass Aesthetic</h3>
+            <p>Depth, gloss, and translucency built in — the modern glassmorphism look done right.</p>
+          </div>
+          <div class="glass-card point-card fade-up">
+            <div class="point-icon"><i class="fas fa-bolt"></i></div>
+            <h3>Fast &amp; Clean</h3>
+            <p>Hand-written HTML, CSS, and JavaScript. No bloat, no heavy frameworks, quick to load.</p>
+          </div>
+        </div>
+
+        <div class="glass-card portfolio-cta fade-up">
+          <div class="cta-text">
+            <h3>Want a portfolio like this?</h3>
+            <p>Tell me about your work and I'll design a 3D glass portfolio built specifically for you.</p>
+          </div>
+          <div class="cta-actions">
+            <a href="#contact" class="btn btn-primary">
+              <span>Start a Project</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="btn btn-small">
+              <i class="fab fa-x-twitter"></i> DM on X
+            </a>
           </div>
         </div>
       </div>

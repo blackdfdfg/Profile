@@ -226,29 +226,40 @@
   var stringEl = document.getElementById('stringEl');
 
   if (idCard) {
-    var STIFF = 52;        // angular stiffness
-    var DAMP = 4.4;        // angular damping
-    var GRAV = 1.6;        // gravity term (sinusoidal restoring)
-    var MAX_ANGLE = 0.55;  // ~31deg
-    var REST_STRING = 60;
-    var IDLE_AMP = 0.045;
+    /* ----- angular (swing) spring ----- */
+    var STIFF = 46;         // angular stiffness
+    var DAMP = 4.2;         // angular damping
+    var GRAV = 1.5;         // pendulum gravity term
+    var MAX_ANGLE = 0.5;    // ~29deg
+    var IDLE_AMP = 0.04;
     var IDLE_PERIOD = 5200;
 
-    var angle = 0;
-    var velocity = 0;
-    var dragging = false;
-    var idleOn = true;
-    var idleT = 0;
+    /* ----- string (length) spring — gives the rubber-band bounce ----- */
+    var STRING_H = 58;      // must match .id-card-string height in CSS
+    var STR_K = 110;        // string stiffness
+    var STR_C = 8.5;        // string damping
+    var MAX_STRETCH = 95;
+
+    var angle = 0, angVel = 0;
+    var stringLen = STRING_H, strVel = 0;
+    var idleOn = true, idleT = 0;
     var last = performance.now();
 
-    var dragStartX = 0, dragStartY = 0;
-    var angleAtStart = 0;
-    var prevX = 0, prevT = 0;
-    var axis = null; // null | 'x' | 'y'
+    var dragging = false;
+    var rafId = null;
+    var axis = null; // null | 'x' | 'y' (touch axis lock)
+    var stretchTarget = 0;
 
-    function setStringHeight(px) {
-      if (!stringEl) return;
-      stringEl.style.height = px.toFixed(1) + 'px';
+    function setTransforms() {
+      var scale = stringLen / STRING_H;
+      var extra = stringLen - STRING_H;
+      if (stringEl) {
+        stringEl.style.transform = 'scaleY(' + scale.toFixed(4) + ')';
+      }
+      /* translate down by the stretch amount so the card stays glued to the
+         string end; rotate about the top center for the swing */
+      idCard.style.transform =
+        'translateY(' + extra.toFixed(2) + 'px) rotate(' + angle.toFixed(4) + 'rad)';
     }
 
     function tick(now) {
@@ -256,55 +267,51 @@
       var dt = dtMs / 1000;
       last = now;
 
+      /* ---- angular ---- */
       if (!dragging) {
-        var accel;
-        var restoring = -STIFF * angle - GRAV * Math.sin(angle);
-
         if (idleOn) {
           idleT += dtMs;
           var idleTarget = Math.sin((idleT / IDLE_PERIOD) * Math.PI * 2) * IDLE_AMP;
-          accel = -STIFF * (angle - idleTarget) - GRAV * Math.sin(angle) - DAMP * velocity;
+          var accel = -STIFF * (angle - idleTarget) - GRAV * Math.sin(angle) - DAMP * angVel;
+          angVel += accel * dt;
         } else {
-          accel = restoring - DAMP * velocity;
-          if (Math.abs(angle) < 0.004 && Math.abs(velocity) < 0.012) {
-            angle = 0; velocity = 0; idleOn = true; idleT = 0;
+          var restoring = -STIFF * angle - GRAV * Math.sin(angle);
+          angVel += (restoring - DAMP * angVel) * dt;
+          if (Math.abs(angle) < 0.004 && Math.abs(angVel) < 0.012) {
+            angle = 0; angVel = 0; idleOn = true; idleT = 0;
           }
         }
-
-        velocity += accel * dt;
-        angle += velocity * dt;
+        angle += angVel * dt;
       }
-
       angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, angle));
 
-      idCard.style.transform = 'rotate(' + angle.toFixed(4) + 'rad)';
-
-      /* Elastic string: tension from angle + release velocity */
-      var stretchTarget = 0;
-      if (dragging) {
-        var rect = idCard.getBoundingClientRect();
-        var horiz = Math.abs(angle) * rect.height * 0.55;
-        var vert = Math.max(0, dragStartY - lastPointerY) * 0.5;
-        stretchTarget = Math.min(horiz * 0.4 + vert, 70);
-      } else {
-        stretchTarget = Math.min(Math.abs(velocity) * 22, 45);
+      /* ---- string length spring (always runs => real bounce) ---- */
+      var targetLen = STRING_H + stretchTarget;
+      var strAccel = (targetLen - stringLen) * STR_K - strVel * STR_C;
+      strVel += strAccel * dt;
+      stringLen += strVel * dt;
+      if (stringLen < STRING_H) {
+        stringLen = STRING_H;
+        if (strVel < 0) strVel = 0;
       }
-      currentString += (REST_STRING + stretchTarget - currentString) * 0.25;
-      setStringHeight(currentString);
+      if (stringLen > STRING_H + MAX_STRETCH) {
+        stringLen = STRING_H + MAX_STRETCH;
+        if (strVel > 0) strVel = 0;
+      }
 
-      requestAnimationFrame(tick);
+      setTransforms();
+      rafId = requestAnimationFrame(tick);
     }
 
-    var currentString = REST_STRING;
+    /* desired string stretch, recomputed while dragging */
+    var dragStartX = 0, dragStartY = 0;
+    var angleAtStart = 0;
+    var prevX = 0, prevT = 0;
     var lastPointerY = 0;
 
     function pointer(e) {
-      if (e.touches && e.touches.length) {
-        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }
-      if (e.changedTouches && e.changedTouches.length) {
-        return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-      }
+      if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (e.changedTouches && e.changedTouches.length) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
       return { x: e.clientX, y: e.clientY };
     }
 
@@ -319,7 +326,7 @@
       prevX = p.x;
       prevT = performance.now();
       angleAtStart = angle;
-      velocity = 0;
+      angVel = 0;
       idCard.style.cursor = 'grabbing';
       window.addEventListener('mousemove', moveDrag);
       window.addEventListener('mouseup', endDrag);
@@ -332,17 +339,19 @@
     function moveDrag(e) {
       if (!dragging) return;
       var p = pointer(e);
+      var dx = p.x - dragStartX;
+      var dy = p.y - dragStartY;
 
-      /* Decide axis once: if mostly vertical on touch, let the page scroll */
+      /* On touch: if the swipe is mostly vertical, release the card and let the
+         page scroll normally. Horizontal drags manipulate the card. */
       if (axis === null && e.type === 'touchmove') {
-        var ax = Math.abs(p.x - dragStartX);
-        var ay = Math.abs(p.y - dragStartY);
-        if (ax < 6 && ay < 6) return;
-        axis = ax > ay ? 'x' : 'y';
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
         if (axis === 'y') {
-          /* hand control back to the browser for vertical scrolling */
           dragging = false;
           idleOn = true;
+          stretchTarget = 0;
+          idCard.style.cursor = 'grab';
           detach();
           return;
         }
@@ -352,19 +361,22 @@
 
       lastPointerY = p.y;
 
-      /* 1:1 mapping — drag right => positive angle => bottom swings right */
-      var dx = p.x - dragStartX;
-      angle = angleAtStart + dx * 0.0055;
-      angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, angle));
+      /* Correct direction: CSS rotate(+) turns clockwise, which moves the card's
+         bottom LEFT. To make the bottom follow the pointer we negate dx. */
+      angle = angleAtStart - dx * 0.005;
 
-      /* velocity for release momentum (previous sample) */
+      /* Angular velocity for the release swing (previous sample). */
       var now = performance.now();
       var elapsed = now - prevT;
       if (elapsed > 8) {
-        velocity = ((p.x - prevX) / elapsed) * 3.5;
-        prevX = p.x;
-        prevT = now;
+        angVel = -((p.x - prevX) / elapsed) * 3.2;
+        prevX = p.x; prevT = now;
       }
+
+      /* Pull down (or pull sideways) to stretch the string; spring gives bounce. */
+      var pullDown = Math.max(0, dy);
+      var pullSide = Math.abs(dx) * 0.22;
+      stretchTarget = Math.min(pullDown * 0.85 + pullSide, MAX_STRETCH);
 
       if (e.cancelable) e.preventDefault();
     }
@@ -373,7 +385,9 @@
       if (!dragging) return;
       dragging = false;
       idCard.style.cursor = 'grab';
-      velocity = Math.max(-3, Math.min(3, velocity));
+      angVel = Math.max(-3, Math.min(3, angVel));
+      /* let the string snap back -> spring overshoots into a bounce */
+      stretchTarget = 0;
       detach();
     }
 
@@ -404,9 +418,10 @@
     }
 
     /* gentle opening nudge */
-    setTimeout(function () { if (!dragging) velocity = 0.9; }, 900);
+    setTimeout(function () { if (!dragging) { angVel = 0.8; stringLen = STRING_H + 10; } }, 900);
 
-    requestAnimationFrame(tick);
+    setTransforms();
+    rafId = requestAnimationFrame(tick);
   }
 
   /* ==========================================================
