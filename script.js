@@ -12,6 +12,7 @@ const contactForm = document.getElementById('contactForm');
 
 /* ============================================
    THEME TOGGLE WITH WIPE ANIMATION (FIX 5)
+   View Transitions API with clip-path fallback
    ============================================ */
 function getTheme() {
   return localStorage.getItem('theme') || 'dark';
@@ -34,47 +35,66 @@ if (themeToggle) {
     const rect = themeToggle.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
-    const maxDim = Math.max(window.innerWidth, window.innerHeight);
-    const radius = maxDim * 2;
 
-    /* Phase 1: Expand circle from button with new theme color */
-    themeWipe.style.pointerEvents = 'all';
-    themeWipe.style.background = next === 'dark' ? '#0a0a0f' : '#f5f5f7';
-    themeWipe.style.transition = 'none';
-    themeWipe.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
-
-    /* Force reflow */
-    void themeWipe.offsetWidth;
-
-    themeWipe.style.transition = 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-    themeWipe.style.clipPath = `circle(${radius}px at ${cx}px ${cy}px)`;
-
-    /* Phase 2: Switch theme when circle covers screen */
-    setTimeout(() => {
+    function doToggle() {
       applyTheme(next);
       localStorage.setItem('theme', next);
-    }, 300);
+    }
 
-    /* Phase 3: Shrink circle from opposite corner to reveal */
-    setTimeout(() => {
-      const revealX = next === 'dark' ? window.innerWidth : 0;
-      const revealY = next === 'dark' ? 0 : window.innerHeight;
+    /* Try View Transitions API first */
+    if (document.startViewTransition) {
+      const transition = document.startViewTransition(() => {
+        doToggle();
+      });
+      transition.ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              'circle(0% at ' + cx + 'px ' + cy + 'px)',
+              'circle(150% at ' + cx + 'px ' + cy + 'px)'
+            ]
+          },
+          {
+            duration: 500,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            pseudoElement: '::view-transition-new(root)'
+          }
+        );
+      });
+    } else {
+      /* Fallback: CSS clip-path circle wipe from button position */
+      var maxDim = Math.max(window.innerWidth, window.innerHeight);
+      var radius = maxDim * 1.8;
+
+      themeWipe.style.pointerEvents = 'all';
+      themeWipe.style.background = next === 'dark' ? '#0a0a0f' : '#f5f5f7';
       themeWipe.style.transition = 'none';
-      themeWipe.style.clipPath = `circle(${radius}px at ${cx}px ${cy}px)`;
+      themeWipe.style.clipPath = 'circle(0px at ' + cx + 'px ' + cy + 'px)';
 
       void themeWipe.offsetWidth;
 
-      themeWipe.style.transition = 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-      themeWipe.style.clipPath = `circle(0px at ${revealX}px ${revealY}px)`;
-    }, 500);
+      themeWipe.style.transition = 'clip-path 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+      themeWipe.style.clipPath = 'circle(' + radius + 'px at ' + cx + 'px ' + cy + 'px)';
 
-    /* Phase 4: Clean up */
-    setTimeout(() => {
-      themeWipe.style.pointerEvents = 'none';
-      themeWipe.style.background = 'transparent';
-      themeWipe.style.clipPath = 'none';
-      themeWipe.style.transition = 'none';
-    }, 1200);
+      setTimeout(function() {
+        doToggle();
+      }, 250);
+
+      setTimeout(function() {
+        themeWipe.style.transition = 'none';
+        themeWipe.style.clipPath = 'circle(' + radius + 'px at ' + cx + 'px ' + cy + 'px)';
+        void themeWipe.offsetWidth;
+        themeWipe.style.transition = 'clip-path 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        themeWipe.style.clipPath = 'circle(0px at ' + cx + 'px ' + cy + 'px)';
+      }, 500);
+
+      setTimeout(function() {
+        themeWipe.style.pointerEvents = 'none';
+        themeWipe.style.background = 'transparent';
+        themeWipe.style.clipPath = 'none';
+        themeWipe.style.transition = 'none';
+      }, 1100);
+    }
   });
 }
 

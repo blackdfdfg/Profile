@@ -102,6 +102,17 @@ img {
   padding: 0 clamp(20px, 4vw, 60px);
 }
 
+/* View Transitions API */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
 /* ============================================
    THEME WIPE OVERLAY
    ============================================ */
