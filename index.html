@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FixAsif | Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="theme-wipe" id="themeWipe"></div>
+
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-logo">Fix<span>Asif</span></a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="nav-link active">Home</a></li>
+        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="#projects" class="nav-link">Projects</a></li>
+        <li><a href="#skills" class="nav-link">Skills</a></li>
+        <li><a href="#contact" class="nav-link">Contact</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <i class="fas fa-moon" id="themeIcon"></i>
+        </button>
+        <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-container">
+        <div class="hero-text">
+          <p class="hero-greeting fade-up">Hello, I'm</p>
+          <h1 class="hero-name fade-up">
+            <span class="gradient-text">FixAsif</span>
+          </h1>
+          <h2 class="hero-role fade-up">Full Stack Developer &amp; Bug Fixer</h2>
+          <p class="hero-bio fade-up">
+            I craft modern web experiences with clean code and creative solutions.
+            Passionate about building fast, beautiful, and functional applications.
+          </p>
+          <div class="hero-buttons fade-up">
+            <a href="#contact" class="btn btn-primary">
+              <span>Hire Me</span>
+              <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="#" class="btn btn-secondary" id="downloadCV">
+              <span>Download CV</span>
+              <i class="fas fa-download"></i>
+            </a>
+          </div>
+          <div class="hero-socials fade-up">
+            <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="social-icon" aria-label="X/Twitter">
+              <i class="fab fa-x-twitter"></i>
+            </a>
+            <a href="https://t.me/FixAsif" target="_blank" rel="noopener" class="social-icon" aria-label="Telegram">
+              <i class="fab fa-telegram-plane"></i>
+            </a>
+            <a href="mailto:fixasif.connect@gmail.com" class="social-icon" aria-label="Email">
+              <i class="fas fa-envelope"></i>
+            </a>
+          </div>
+        </div>
+        <div class="hero-card-wrapper fade-up">
+          <div class="id-card-string"></div>
+          <div class="id-card" id="idCard">
+            <div class="id-card-inner">
+              <div class="id-card-header">
+                <span class="id-card-label">DEVELOPER ID</span>
+                <div class="id-card-chip"></div>
+              </div>
+              <div class="id-card-photo">
+                <img src="assets/images/profile.jpg" alt="FixAsif Profile" id="profileImg" onerror="this.src='assets/images/profile.svg'" />
+              </div>
+              <div class="id-card-info">
+                <h3>FixAsif</h3>
+                <p>Full Stack Developer</p>
+                <span class="id-card-tag">Creative Coder</span>
+              </div>
+              <div class="id-card-footer">
+                <div class="id-card-barcode"></div>
+                <span>2026 — Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about" id="about">
+      <div class="container">
+        <h2 class="section-title fade-up">
+          <span class="gradient-text">About Me</span>
+        </h2>
+        <div class="about-grid">
+          <div class="glass-card about-card fade-up">
+            <p class="about-text">
+              I'm a passionate developer who loves turning ideas into reality through code.
+              With expertise in modern web technologies, I build responsive, performant,
+              and visually stunning applications. I thrive on solving complex problems
+              and creating seamless user experiences.
+            </p>
+            <p class="about-text">
+              When I'm not coding, you'll find me exploring new technologies,
+              contributing to open-source projects, and continuously pushing the boundaries
+              of what's possible on the web.
+            </p>
+          </div>
+          <div class="about-stats fade-up">
+            <div class="glass-card stat-card">
+              <span class="stat-number gradient-text">10+</span>
+              <span class="stat-label">Projects</span>
+            </div>
+            <div class="glass-card stat-card">
+              <span class="stat-number gradient-text">2+</span>
+              <span class="stat-label">Years Exp</span>
+            </div>
+            <div class="glass-card stat-card">
+              <span class="stat-number gradient-text">50+</span>
+              <span class="stat-label">Commits</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section projects" id="projects">
+      <div class="container">
+        <h2 class="section-title fade-up">
+          <span class="gradient-text">Projects</span>
+        </h2>
+        <div class="projects-grid">
+          <div class="glass-card project-card fade-up">
+            <div class="project-image">
+              <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop" alt="Project 1" />
+            </div>
+            <div class="project-info">
+              <h3>E-Commerce Platform</h3>
+              <p>Full-stack e-commerce solution with cart, payment integration, and admin dashboard.</p>
+              <div class="project-tags">
+                <span class="tag">React</span>
+                <span class="tag">Node.js</span>
+                <span class="tag">MongoDB</span>
+              </div>
+              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="glass-card project-card fade-up">
+            <div class="project-image">
+              <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop" alt="Project 2" />
+            </div>
+            <div class="project-info">
+              <h3>Code Debugging Tool</h3>
+              <p>AI-powered debugging assistant that identifies and suggests fixes for common bugs.</p>
+              <div class="project-tags">
+                <span class="tag">Python</span>
+                <span class="tag">AI/ML</span>
+                <span class="tag">Flask</span>
+              </div>
+              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="glass-card project-card fade-up">
+            <div class="project-image">
+              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop" alt="Project 3" />
+            </div>
+            <div class="project-info">
+              <h3>Analytics Dashboard</h3>
+              <p>Real-time data visualization dashboard with interactive charts and dark theme.</p>
+              <div class="project-tags">
+                <span class="tag">Vue.js</span>
+                <span class="tag">D3.js</span>
+                <span class="tag">Firebase</span>
+              </div>
+              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+          <div class="glass-card project-card fade-up">
+            <div class="project-image">
+              <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&h=400&fit=crop" alt="Project 4" />
+            </div>
+            <div class="project-info">
+              <h3>Portfolio Generator</h3>
+              <p>Automated portfolio website builder with customizable glassmorphism templates.</p>
+              <div class="project-tags">
+                <span class="tag">HTML/CSS</span>
+                <span class="tag">JS</span>
+                <span class="tag">API</span>
+              </div>
+              <a href="#" class="btn btn-small">View Project <i class="fas fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section skills" id="skills">
+      <div class="container">
+        <h2 class="section-title fade-up">
+          <span class="gradient-text">Skills</span>
+        </h2>
+        <div class="skills-grid fade-up">
+          <div class="glass-card skill-card">
+            <i class="fab fa-html5 skill-icon"></i>
+            <span>HTML5</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-css3-alt skill-icon"></i>
+            <span>CSS3</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-js skill-icon"></i>
+            <span>JavaScript</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-react skill-icon"></i>
+            <span>React</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-node-js skill-icon"></i>
+            <span>Node.js</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-python skill-icon"></i>
+            <span>Python</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-git-alt skill-icon"></i>
+            <span>Git</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-docker skill-icon"></i>
+            <span>Docker</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fas fa-database skill-icon"></i>
+            <span>MongoDB</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fas fa-fire skill-icon"></i>
+            <span>Firebase</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fab fa-figma skill-icon"></i>
+            <span>Figma</span>
+          </div>
+          <div class="glass-card skill-card">
+            <i class="fas fa-terminal skill-icon"></i>
+            <span>Linux</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section contact" id="contact">
+      <div class="container">
+        <h2 class="section-title fade-up">
+          <span class="gradient-text">Get In Touch</span>
+        </h2>
+        <div class="contact-grid">
+          <div class="glass-card contact-card fade-up">
+            <form id="contactForm" class="contact-form">
+              <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Your Name" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" required />
+              </div>
+              <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="5" placeholder="Write your message..." required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full">
+                <span>Send Message</span>
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+          <div class="contact-info fade-up">
+            <div class="glass-card contact-info-card">
+              <h3>Let's Connect</h3>
+              <p>Feel free to reach out for collaborations or just a friendly hello!</p>
+              <div class="contact-links">
+                <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="contact-link">
+                  <i class="fab fa-x-twitter"></i>
+                  <span>@Fixasif</span>
+                </a>
+                <a href="https://t.me/FixAsif" target="_blank" rel="noopener" class="contact-link">
+                  <i class="fab fa-telegram-plane"></i>
+                  <span>@FixAsif</span>
+                </a>
+                <a href="mailto:fixasif.connect@gmail.com" class="contact-link">
+                  <i class="fas fa-envelope"></i>
+                  <span>fixasif.connect@gmail.com</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <p>&copy; 2026 <span class="gradient-text">FixAsif</span>. All rights reserved.</p>
+        <div class="footer-socials">
+          <a href="https://x.com/Fixasif" target="_blank" rel="noopener" aria-label="X/Twitter">
+            <i class="fab fa-x-twitter"></i>
+          </a>
+          <a href="https://t.me/FixAsif" target="_blank" rel="noopener" aria-label="Telegram">
+            <i class="fab fa-telegram-plane"></i>
+          </a>
+          <a href="mailto:fixasif.connect@gmail.com" aria-label="Email">
+            <i class="fas fa-envelope"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
