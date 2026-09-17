@@ -39,7 +39,7 @@ if (themeToggle) {
 
     /* Phase 1: Expand circle from button with new theme color */
     themeWipe.style.pointerEvents = 'all';
-    themeWipe.style.background = next === 'dark' ? '#0a0a0f' : '#f0f0f5';
+    themeWipe.style.background = next === 'dark' ? '#0a0a0f' : '#f5f5f7';
     themeWipe.style.transition = 'none';
     themeWipe.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
 
