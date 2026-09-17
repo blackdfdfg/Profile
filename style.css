@@ -89,9 +89,9 @@ img {
 }
 
 .container {
-  max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(20px, 4vw, 60px);
 }
 
 /* ============================================
@@ -325,9 +325,9 @@ img {
 }
 
 .nav-container {
-  max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(20px, 4vw, 60px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -446,17 +446,17 @@ img {
 }
 
 .hero-container {
-  max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(20px, 4vw, 60px);
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 4vw, 60px);
   align-items: center;
 }
 
 .hero-greeting {
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
   color: var(--accent-2);
   font-weight: 500;
   margin-bottom: 8px;
@@ -478,17 +478,17 @@ img {
 }
 
 .hero-bio {
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
   color: var(--text-secondary);
-  max-width: 480px;
-  margin-bottom: 32px;
+  max-width: clamp(320px, 36vw, 480px);
+  margin-bottom: clamp(20px, 3vw, 32px);
   line-height: 1.8;
 }
 
 .hero-buttons {
   display: flex;
-  gap: 16px;
-  margin-bottom: 36px;
+  gap: clamp(10px, 1.5vw, 16px);
+  margin-bottom: clamp(24px, 3vw, 36px);
   flex-wrap: wrap;
 }
 
@@ -534,7 +534,7 @@ img {
 
 .id-card-string {
   width: 2px;
-  height: 60px;
+  height: clamp(40px, 5vw, 60px);
   background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
   position: relative;
   z-index: 2;
@@ -554,7 +554,7 @@ img {
 }
 
 .id-card {
-  width: 320px;
+  width: clamp(220px, 24vw, 320px);
   background: var(--glass-bg);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -580,7 +580,7 @@ img {
 }
 
 .id-card-inner {
-  padding: 24px;
+  padding: clamp(16px, 2vw, 24px);
 }
 
 .id-card-header {
@@ -619,8 +619,8 @@ img {
 }
 
 .id-card-photo {
-  width: 140px;
-  height: 140px;
+  width: clamp(100px, 11vw, 140px);
+  height: clamp(100px, 11vw, 140px);
   margin: 0 auto 20px;
   border-radius: 16px;
   overflow: hidden;
@@ -694,7 +694,7 @@ img {
    SECTIONS
    ============================================ */
 .section {
-  padding: 100px 0;
+  padding: clamp(60px, 8vw, 100px) 0;
   position: relative;
   z-index: 1;
 }
@@ -713,12 +713,12 @@ img {
 .about-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
-  gap: 40px;
+  gap: clamp(20px, 3vw, 40px);
   align-items: start;
 }
 
 .about-card {
-  padding: 40px;
+  padding: clamp(24px, 3vw, 40px);
 }
 
 .about-text {
@@ -761,7 +761,7 @@ img {
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 28px;
+  gap: clamp(16px, 2.5vw, 28px);
 }
 
 .project-card {
@@ -787,7 +787,7 @@ img {
 }
 
 .project-info {
-  padding: 28px;
+  padding: clamp(18px, 2.5vw, 28px);
 }
 
 .project-info h3 {
@@ -826,7 +826,7 @@ img {
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: clamp(12px, 1.8vw, 20px);
 }
 
 .skill-card {
@@ -860,12 +860,12 @@ img {
 .contact-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 40px;
+  gap: clamp(20px, 3vw, 40px);
   align-items: start;
 }
 
 .contact-card {
-  padding: 40px;
+  padding: clamp(24px, 3vw, 40px);
 }
 
 .contact-form {
@@ -921,7 +921,7 @@ img {
 }
 
 .contact-info-card {
-  padding: 36px;
+  padding: clamp(24px, 3vw, 36px);
 }
 
 .contact-info-card h3 {
@@ -1033,29 +1033,6 @@ img {
    RESPONSIVE
    ============================================ */
 @media (max-width: 1024px) {
-  .hero-container {
-    grid-template-columns: 1fr;
-    gap: 50px;
-    text-align: center;
-  }
-
-  .hero-bio {
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .hero-buttons {
-    justify-content: center;
-  }
-
-  .hero-socials {
-    justify-content: center;
-  }
-
-  .hero-card-wrapper {
-    order: -1;
-  }
-
   .about-grid {
     grid-template-columns: 1fr;
   }
@@ -1101,6 +1078,29 @@ img {
 
   .hero {
     padding: 100px 0 60px;
+  }
+
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .hero-bio {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+
+  .hero-socials {
+    justify-content: center;
+  }
+
+  .hero-card-wrapper {
+    order: -1;
   }
 
   .hero-name {
