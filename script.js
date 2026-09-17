@@ -11,7 +11,7 @@ const idCard = document.getElementById('idCard');
 const contactForm = document.getElementById('contactForm');
 
 /* ============================================
-   THEME TOGGLE WITH WIPE ANIMATION
+   THEME TOGGLE WITH WIPE ANIMATION (FIX 5)
    ============================================ */
 function getTheme() {
   return localStorage.getItem('theme') || 'dark';
@@ -35,49 +35,58 @@ if (themeToggle) {
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const maxDim = Math.max(window.innerWidth, window.innerHeight);
-    const radius = maxDim * 1.5;
+    const radius = maxDim * 2;
 
-    themeWipe.classList.add('active');
-    themeWipe.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
+    /* Phase 1: Expand circle from button with new theme color */
+    themeWipe.style.pointerEvents = 'all';
     themeWipe.style.background = next === 'dark' ? '#0a0a0f' : '#f0f0f5';
-    themeWipe.style.transition = 'clip-path 0.7s cubic-bezier(0.23, 1, 0.32, 1)';
+    themeWipe.style.transition = 'none';
+    themeWipe.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
 
-    requestAnimationFrame(() => {
-      themeWipe.style.clipPath = `circle(${radius}px at ${cx}px ${cy}px)`;
-    });
+    /* Force reflow */
+    void themeWipe.offsetWidth;
 
+    themeWipe.style.transition = 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+    themeWipe.style.clipPath = `circle(${radius}px at ${cx}px ${cy}px)`;
+
+    /* Phase 2: Switch theme when circle covers screen */
     setTimeout(() => {
       applyTheme(next);
       localStorage.setItem('theme', next);
-    }, 350);
+    }, 300);
 
+    /* Phase 3: Shrink circle from opposite corner to reveal */
     setTimeout(() => {
-      themeWipe.classList.remove('active');
-      themeWipe.style.transition = 'clip-path 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+      const revealX = next === 'dark' ? window.innerWidth : 0;
+      const revealY = next === 'dark' ? 0 : window.innerHeight;
+      themeWipe.style.transition = 'none';
       themeWipe.style.clipPath = `circle(${radius}px at ${cx}px ${cy}px)`;
-      requestAnimationFrame(() => {
-        themeWipe.style.clipPath = `circle(0px at ${cx}px ${cy}px)`;
-      });
+
+      void themeWipe.offsetWidth;
+
+      themeWipe.style.transition = 'clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      themeWipe.style.clipPath = `circle(0px at ${revealX}px ${revealY}px)`;
     }, 500);
 
+    /* Phase 4: Clean up */
     setTimeout(() => {
+      themeWipe.style.pointerEvents = 'none';
       themeWipe.style.background = 'transparent';
-    }, 1100);
+      themeWipe.style.clipPath = 'none';
+      themeWipe.style.transition = 'none';
+    }, 1200);
   });
 }
 
 /* ============================================
    NAVBAR SCROLL EFFECT
    ============================================ */
-let lastScroll = 0;
 window.addEventListener('scroll', () => {
-  const st = window.scrollY;
-  if (st > 50) {
+  if (window.scrollY > 50) {
     navbar.classList.add('scrolled');
   } else {
     navbar.classList.remove('scrolled');
   }
-  lastScroll = st;
 });
 
 /* ============================================
@@ -137,46 +146,90 @@ const observer = new IntersectionObserver((entries) => {
 fadeEls.forEach(el => observer.observe(el));
 
 /* ============================================
-   HANGING ID CARD — PHYSICS-BASED SWING & DRAG
+   HANGING ID CARD — SPRING PHYSICS (FIX 1+2)
    ============================================ */
 (function () {
   if (!idCard) return;
 
+  const stringEl = idCard.parentElement.querySelector('.id-card-string');
+  const wrapper = idCard.parentElement;
+  const restStringH = 60;
+
+  /* Spring physics state */
   let angle = 0;
   let angularVelocity = 0;
-  const damping = 0.985;
-  const gravity = 0.0004;
+  const stiffness = 0.015;
+  const damping = 0.92;
+  const maxAngle = 0.55;
+
   let isDragging = false;
   let dragStartX = 0;
   let dragAngle = 0;
-  let animFrame = null;
   let lastTime = performance.now();
 
+  /* Controlled idle swing */
+  let idleEnabled = true;
+  let idleTime = 0;
+  const idleAmplitude = 0.06;
+  const idleSpeed = 0.0008;
+
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 16.667, 3);
+    const rawDt = (now - lastTime) / 16.667;
+    const dt = Math.min(rawDt, 3);
     lastTime = now;
 
-    if (!isDragging) {
-      const force = -gravity * Math.sin(angle) * dt;
-      angularVelocity += force;
+    if (isDragging) {
+      /* During drag, just follow the finger/mouse */
+    } else if (idleEnabled) {
+      /* Controlled gentle idle swing */
+      idleTime += dt * 16.667;
+      const idleAngle = Math.sin(idleTime * idleSpeed) * idleAmplitude;
+      /* Blend idle with spring physics */
+      const springForce = -stiffness * (angle - idleAngle);
+      angularVelocity += springForce * dt;
+      angularVelocity *= Math.pow(damping, dt);
+      angle += angularVelocity * dt;
+    } else {
+      /* Pure spring physics — returns to center */
+      const springForce = -stiffness * angle;
+      angularVelocity += springForce * dt;
       angularVelocity *= Math.pow(damping, dt);
       angle += angularVelocity * dt;
     }
 
-    idCard.style.transform = `rotate(${angle}rad)`;
-    animFrame = requestAnimationFrame(tick);
+    /* Clamp */
+    angle = Math.max(-maxAngle, Math.min(maxAngle, angle));
+
+    /* Apply rotation */
+    idCard.style.transform = `rotate(${angle}rad) translateY(0)`;
+
+    /* Elastic string stretch based on displacement */
+    if (stringEl) {
+      const displacement = Math.abs(angle);
+      const stretch = displacement * 80;
+      const bounce = isDragging ? stretch : stretch * Math.abs(angularVelocity) * 8;
+      const totalH = restStringH + Math.max(0, bounce);
+      stringEl.style.height = totalH + 'px';
+      stringEl.style.transition = isDragging ? 'height 0.1s ease-out' : 'height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    }
+
+    requestAnimationFrame(tick);
   }
 
-  animFrame = requestAnimationFrame(tick);
+  requestAnimationFrame(tick);
 
-  function getClientX(e) {
-    if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
-    return e.clientX;
+  function getClientXY(e) {
+    if (e.touches && e.touches.length > 0) {
+      return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+    return { x: e.clientX, y: e.clientY };
   }
 
   function onDragStart(e) {
     isDragging = true;
-    dragStartX = getClientX(e);
+    idleEnabled = false;
+    const pos = getClientXY(e);
+    dragStartX = pos.x;
     dragAngle = angle;
     angularVelocity = 0;
     idCard.style.cursor = 'grabbing';
@@ -185,9 +238,11 @@ fadeEls.forEach(el => observer.observe(el));
 
   function onDragMove(e) {
     if (!isDragging) return;
-    const dx = getClientX(e) - dragStartX;
-    angle = dragAngle + dx * 0.006;
-    angle = Math.max(-0.6, Math.min(0.6, angle));
+    const pos = getClientXY(e);
+    const dx = pos.x - dragStartX;
+    /* Direct 1:1 mapping — drag right = tilt right (positive angle = bottom right) */
+    angle = dragAngle + dx * 0.005;
+    angle = Math.max(-maxAngle, Math.min(maxAngle, angle));
     e.preventDefault();
   }
 
@@ -195,6 +250,15 @@ fadeEls.forEach(el => observer.observe(el));
     if (!isDragging) return;
     isDragging = false;
     idCard.style.cursor = 'grab';
+    /* Give a small velocity based on current angle for natural spring-back */
+    angularVelocity = angle * 0.3;
+    /* Re-enable idle swing after spring settles */
+    setTimeout(() => {
+      if (Math.abs(angle) < 0.01 && Math.abs(angularVelocity) < 0.001) {
+        idleEnabled = true;
+        idleTime = 0;
+      }
+    }, 2000);
   }
 
   idCard.addEventListener('mousedown', onDragStart);
@@ -205,26 +269,10 @@ fadeEls.forEach(el => observer.observe(el));
   window.addEventListener('touchmove', onDragMove, { passive: false });
   window.addEventListener('touchend', onDragEnd);
 
-  /* Auto swing on load */
+  /* Initial gentle nudge */
   setTimeout(() => {
-    angularVelocity = 0.025;
-  }, 800);
-
-  /* Mouse proximity effect */
-  document.addEventListener('mousemove', (e) => {
-    if (isDragging) return;
-    const rect = idCard.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = e.clientX - cx;
-    const dy = e.clientY - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 300) {
-      const push = (300 - dist) / 300;
-      const targetAngle = dx * 0.0003 * push;
-      angle += (targetAngle - angle) * 0.03;
-    }
-  });
+    angularVelocity = 0.012;
+  }, 1000);
 })();
 
 /* ============================================

@@ -29,29 +29,38 @@
   --input-border: rgba(255, 255, 255, 0.12);
   --input-focus: rgba(124, 58, 237, 0.5);
   --section-title-size: clamp(2rem, 5vw, 3rem);
+  /* ID Card glass */
+  --idcard-bg: rgba(15, 15, 25, 0.65);
+  --idcard-border: rgba(255, 255, 255, 0.15);
+  --idcard-glow: rgba(124, 58, 237, 0.15);
+  --idcard-inner-glow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2);
 }
 
 [data-theme="light"] {
-  --bg-primary: #f0f0f5;
-  --bg-secondary: #e8e8f0;
+  --bg-primary: #eaeaf0;
+  --bg-secondary: #e0e0ea;
   --text-primary: #1a1a2e;
   --text-secondary: #555570;
   --text-heading: #0a0a0f;
-  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg: rgba(255, 255, 255, 0.5);
   --glass-border: rgba(255, 255, 255, 0.7);
-  --glass-shadow: rgba(100, 100, 150, 0.15);
-  --card-hover-glow: rgba(124, 58, 237, 0.15);
-  --btn-bg: rgba(0, 0, 0, 0.06);
-  --btn-border: rgba(0, 0, 0, 0.12);
-  --nav-bg: rgba(240, 240, 245, 0.8);
-  --orb-1: rgba(124, 58, 237, 0.18);
-  --orb-2: rgba(59, 130, 246, 0.15);
-  --orb-3: rgba(6, 182, 212, 0.12);
-  --tag-bg: rgba(124, 58, 237, 0.1);
-  --tag-text: #7c3aed;
-  --input-bg: rgba(0, 0, 0, 0.04);
-  --input-border: rgba(0, 0, 0, 0.12);
-  --input-focus: rgba(124, 58, 237, 0.4);
+  --glass-shadow: rgba(100, 100, 150, 0.12);
+  --card-hover-glow: rgba(124, 58, 237, 0.12);
+  --btn-bg: rgba(0, 0, 0, 0.05);
+  --btn-border: rgba(0, 0, 0, 0.1);
+  --nav-bg: rgba(234, 234, 240, 0.82);
+  --orb-1: rgba(124, 58, 237, 0.12);
+  --orb-2: rgba(59, 130, 246, 0.10);
+  --orb-3: rgba(6, 182, 212, 0.08);
+  --tag-bg: rgba(124, 58, 237, 0.08);
+  --tag-text: #6d28d9;
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --input-border: rgba(0, 0, 0, 0.1);
+  --input-focus: rgba(124, 58, 237, 0.35);
+  --idcard-bg: rgba(255, 255, 255, 0.6);
+  --idcard-border: rgba(200, 200, 220, 0.6);
+  --idcard-glow: rgba(124, 58, 237, 0.08);
+  --idcard-inner-glow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.05);
 }
 
 /* ============================================
@@ -75,7 +84,7 @@ body {
   line-height: 1.7;
   overflow-x: hidden;
   min-height: 100vh;
-  transition: background 0.4s ease, color 0.4s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -106,10 +115,7 @@ img {
   z-index: 10000;
   pointer-events: none;
   background: transparent;
-}
-
-.theme-wipe.active {
-  pointer-events: all;
+  clip-path: none;
 }
 
 /* ============================================
@@ -195,6 +201,13 @@ img {
   background-clip: text;
 }
 
+[data-theme="light"] .gradient-text {
+  background: linear-gradient(135deg, #6d28d9, #2563eb, #0891b2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* ============================================
    GLASS CARD
    ============================================ */
@@ -211,11 +224,21 @@ img {
               border-color 0.4s ease;
 }
 
+[data-theme="light"] .glass-card {
+  box-shadow: 0 8px 32px var(--glass-shadow),
+              0 2px 8px rgba(0,0,0,0.04);
+}
+
 .glass-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 48px var(--glass-shadow),
               0 0 30px var(--card-hover-glow);
   border-color: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="light"] .glass-card:hover {
+  box-shadow: 0 16px 48px var(--glass-shadow),
+              0 4px 16px rgba(100,100,150,0.08);
 }
 
 /* ============================================
@@ -302,6 +325,10 @@ img {
   justify-content: center;
 }
 
+[data-theme="light"] .btn::before {
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+}
+
 /* ============================================
    NAVBAR
    ============================================ */
@@ -359,7 +386,6 @@ img {
   font-weight: 500;
   color: var(--text-secondary);
   transition: all 0.3s ease;
-  position: relative;
 }
 
 .nav-link:hover,
@@ -370,6 +396,15 @@ img {
 
 .nav-link.active {
   color: #a78bfa;
+}
+
+[data-theme="light"] .nav-link.active {
+  color: #6d28d9;
+}
+
+[data-theme="light"] .nav-link:hover,
+[data-theme="light"] .nav-link.active {
+  background: rgba(124, 58, 237, 0.08);
 }
 
 .nav-right {
@@ -521,8 +556,15 @@ img {
   box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
 }
 
+[data-theme="light"] .social-icon:hover {
+  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.2);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12);
+}
+
 /* ============================================
-   HANGING ID CARD
+   HANGING ID CARD — PREMIUM GLASS (FIX 3)
    ============================================ */
 .hero-card-wrapper {
   display: flex;
@@ -534,40 +576,73 @@ img {
 
 .id-card-string {
   width: 2px;
-  height: clamp(40px, 5vw, 60px);
-  background: linear-gradient(180deg, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
+  height: 60px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.35) 0%,
+    rgba(255,255,255,0.15) 40%,
+    rgba(255,255,255,0.05) 100%);
   position: relative;
   z-index: 2;
+  transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Slight metallic sheen */
+  background-size: 100% 100%;
+  box-shadow: 0 0 4px rgba(255,255,255,0.1);
 }
 
 .id-card-string::before {
   content: '';
   position: absolute;
-  top: -8px;
+  top: -6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle, rgba(255,255,255,0.25), rgba(255,255,255,0.08));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 6px rgba(255,255,255,0.15);
 }
 
 .id-card {
-  width: clamp(220px, 24vw, 320px);
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  box-shadow: 0 16px 48px var(--glass-shadow),
-              0 0 40px rgba(124, 58, 237, 0.1);
+  width: clamp(200px, 22vw, 300px);
+  background: var(--idcard-bg);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid var(--idcard-border);
+  border-radius: 18px;
+  box-shadow:
+    0 20px 60px var(--glass-shadow),
+    0 0 40px var(--idcard-glow),
+    var(--idcard-inner-glow);
   overflow: hidden;
   transform-origin: top center;
   cursor: grab;
   user-select: none;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.4s ease;
   position: relative;
+}
+
+.id-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.08) 0%,
+    rgba(255,255,255,0.02) 60%,
+    transparent 100%);
+  border-radius: 18px 18px 0 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+[data-theme="light"] .id-card::before {
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.6) 0%,
+    rgba(255,255,255,0.2) 60%,
+    transparent 100%);
 }
 
 .id-card:active {
@@ -575,35 +650,56 @@ img {
 }
 
 .id-card:hover {
-  box-shadow: 0 20px 60px var(--glass-shadow),
-              0 0 60px rgba(124, 58, 237, 0.2);
+  box-shadow:
+    0 24px 70px var(--glass-shadow),
+    0 0 60px var(--idcard-glow),
+    var(--idcard-inner-glow);
 }
 
 .id-card-inner {
-  padding: clamp(16px, 2vw, 24px);
+  padding: clamp(14px, 2vw, 22px);
+  position: relative;
+  z-index: 2;
 }
 
 .id-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .id-card-label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 2.5px;
   color: var(--text-secondary);
   text-transform: uppercase;
+  opacity: 0.8;
 }
 
+/* Premium chip design */
 .id-card-chip {
-  width: 28px;
-  height: 20px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #d4af37, #f0d060, #d4af37);
+  width: 32px;
+  height: 22px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #b8860b, #ffd700, #daa520, #ffd700, #b8860b);
   position: relative;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.4),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+}
+
+.id-card-chip::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
 }
 
 .id-card-chip::after {
@@ -612,20 +708,24 @@ img {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 16px;
-  height: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  width: 14px;
+  height: 8px;
+  border: 1px solid rgba(139, 105, 20, 0.3);
   border-radius: 2px;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15));
 }
 
 .id-card-photo {
-  width: clamp(100px, 11vw, 140px);
-  height: clamp(100px, 11vw, 140px);
-  margin: 0 auto 20px;
-  border-radius: 16px;
+  width: clamp(90px, 10vw, 130px);
+  height: clamp(90px, 10vw, 130px);
+  margin: 0 auto 16px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 2px solid var(--glass-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--idcard-border);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 15px var(--idcard-glow);
+  position: relative;
 }
 
 .id-card-photo img {
@@ -636,18 +736,18 @@ img {
 
 .id-card-info {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .id-card-info h3 {
-  font-size: 1.3rem;
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
   font-weight: 700;
   color: var(--text-heading);
   margin-bottom: 4px;
 }
 
 .id-card-info p {
-  font-size: 0.85rem;
+  font-size: clamp(0.75rem, 0.9vw, 0.85rem);
   color: var(--text-secondary);
   margin-bottom: 10px;
 }
@@ -658,36 +758,42 @@ img {
   border-radius: 50px;
   background: var(--tag-bg);
   color: var(--tag-text);
-  font-size: 0.75rem;
+  font-size: clamp(0.65rem, 0.8vw, 0.75rem);
   font-weight: 600;
+  border: 1px solid rgba(124, 58, 237, 0.2);
 }
 
 .id-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--glass-border);
 }
 
+/* Refined barcode */
 .id-card-barcode {
-  width: 60px;
-  height: 20px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--text-secondary) 0px,
-    var(--text-secondary) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  opacity: 0.4;
-  border-radius: 2px;
+  width: 55px;
+  height: 18px;
+  position: relative;
+  display: flex;
+  gap: 1.5px;
+  align-items: stretch;
 }
 
-.id-card-footer span {
-  font-size: 0.7rem;
+.id-card-barcode span {
+  display: block;
+  height: 100%;
+  background: var(--text-secondary);
+  opacity: 0.35;
+  border-radius: 1px;
+}
+
+.id-card-footer > span {
+  font-size: clamp(0.6rem, 0.75vw, 0.7rem);
   color: var(--text-secondary);
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 /* ============================================
@@ -703,7 +809,7 @@ img {
   font-size: var(--section-title-size);
   font-weight: 700;
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: clamp(40px, 5vw, 60px);
   color: var(--text-heading);
 }
 
@@ -850,6 +956,13 @@ img {
   background-clip: text;
 }
 
+[data-theme="light"] .skill-icon {
+  background: linear-gradient(135deg, #6d28d9, #2563eb, #0891b2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .skill-card:hover {
   color: var(--text-heading);
 }
@@ -968,6 +1081,10 @@ img {
   color: var(--text-primary);
 }
 
+[data-theme="light"] .contact-link:hover {
+  background: rgba(124, 58, 237, 0.06);
+}
+
 /* ============================================
    FOOTER
    ============================================ */
@@ -1012,6 +1129,11 @@ img {
   color: #a78bfa;
   background: rgba(124, 58, 237, 0.2);
   transform: translateY(-2px);
+}
+
+[data-theme="light"] .footer-socials a:hover {
+  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.08);
 }
 
 /* ============================================
@@ -1108,12 +1230,17 @@ img {
   }
 
   .id-card {
-    width: 260px;
+    width: 55vw;
+    max-width: 240px;
   }
 
   .id-card-photo {
-    width: 110px;
-    height: 110px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .id-card-inner {
+    padding: 14px;
   }
 
   .about-card {
@@ -1181,7 +1308,13 @@ img {
   }
 
   .id-card {
-    width: 230px;
+    width: 60vw;
+    max-width: 220px;
+  }
+
+  .id-card-photo {
+    width: 65px;
+    height: 65px;
   }
 
   .about-stats {
