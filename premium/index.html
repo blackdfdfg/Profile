@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background: #f4f4f4; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    .price-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 10px 0; }
+    .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,.6); align-items: center; justify-content: center; }
+    .modal-content { background:#fff; padding:30px; border-radius:8px; max-width: 400px; width: 90%; }
+    input, button { padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; }
+    button { background:#007bff; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+    button:disabled { background:#999; cursor: not-allowed; }
+    .error { color:red; margin-top:8px; }
+    .success { color:green; margin-top:8px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Premium Access</h1>
+  <div id="pricing-section">
+    <!-- PRICING CONFIG + UI -->
+  </div>
+  <div id="verify-section" style="marginTop:20px;">
+    <h2>Verify Key</h2>
+    <input type="text" id="key-input" placeholder="Enter your key" />
+    <button id="check-key-btn">Check Key</button>
+    <div id="key-status"></div>
+  </div>
+</div>
+
+<!-- MODAL: Payment form shown when user picks a package -->
+<div id="payment-modal" class="modal">
+  <div class="modal-content">
+    <h2>Order # <span id="order-id-display"></span></h2>
+    <p>Amount: $<span id="order-amount"></span></p>
+    <p>Send USDT to: <strong>TUx2JsaF3xJ5o9qZb6R1mNpLwVcXyZ8kAe</strong></p>
+    <p>Wait for 1-2 confirmations, then enter the Binance Order ID below:</p>
+    <!-- TURNSTILE placeholder (replaced by real Turnstile in prod) -->
+    <div id="cf-turnstile" data-sitekey="mock-turnstille-sitekey"></div>
+    <input type="text" id="binance-order-id" placeholder="Binance Order ID" />
+    <button id="verify-payment-btn">Verify Payment</button>
+    <div id="verify-msg"></div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  // Toggle between mock (demo) and real API mode.
+  // In MOCK_MODE=true the frontend never calls a real backend;
+  // all API functions return resolved Promises after a short delay.
+  const MOCK_MODE = true;
+
+  // Base URL for the real backend (used only when MOCK_MODE=false).
+  const API_BASE = "";
+
+  // ============================================================
+  // PRICING CONFIGURATION
+  // ============================================================
+  // Defines available packages: label, price in USD, and how many keys are included.
+  const PRICING_CONFIG = [
+    { id: "basic",   label: "Basic Pack",   price: 5.00,  keys: 1 },
+    { id: "pro",     label: "Pro Pack",     price: 12.00, keys: 3 },
+    { id: "elite",   label: "Elite Pack",   price: 25.00, keys: 7 }
+  ];
+
+  // ============================================================
+  // UTILITY — Simulated network delay for demo mode
+  // ============================================================
+  const MOCK_DELAY = 2000; // 2 seconds to simulate latency
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ============================================================
+  // API FUNCTIONS — Each returns a Promise so the caller
+  // always uses .then() regardless of MOCK_MODE.
+  // ============================================================
+
+  /**
+   * createOrder — initiates a new purchase.
+   * @param {string} packageId  (basic|pro|elite)
+   * @param {string} ip        client IP (real use only)
+   * @returns {Promise<{orderId:string, amount:number, keys:number}>}
+   */
+  async function createOrder(packageId, ip = "") {
+    if (MOCK_MODE) {
+      await sleep(MOCK_DELAY);
+
+      // Demo: packageId === "TEST-OK"  → success
+      //       packageId === "TEST-FAIL"→ always fails
+      if (packageId === "TEST-OK") {
+        return {
+          orderId: "MOCK-ORDER-001",
+          amount: 5.001,
+          keys: 1,
+          binanceOrderId: "MOCK-BINANCE-OK-12345"
+        };
+      }
+      if (packageId === "TEST-FAIL") {
+        return {
+          orderId: "MOCK-ORDER-FAIL",
+          amount: 5.002,
+          keys: 1,
+          binanceOrderId: "MOCK-BINANCE-FAIL-99999"
+        };
+      }
+
+      // normal mock lookup
+      const p = PRICING_CONFIG.find(x => x.id === packageId);
+      if (!p) throw new Error("Invalid package");
+      return {
+        orderId: "MOCK-ORDER-" + packageId,
+        amount: p.price,
+        keys: p.keys,
+        binanceOrderId: "MOCK-BINANCE-" + packageId.toUpperCase() + "-12345"
+      };
+    }
+
+    // REAL backend call (Step 2)
+    const res = await fetch(API_BASE + "/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": ip },
+      body: JSON.stringify({ package: packageId })
+    });
+    if (!res.ok) throw new Error("Failed to create order");
+    return res.json();
+  }
+
+  /**
+   * verifyPayment — checks if the user actually paid.
+   * @param {string} orderId        internal order id from createOrder
+   * @param {string} binanceOrderId user-submitted Binance transfer id
+   * @param {string} turnstileToken turnstile token (ignored in mock)
+   * @returns {Promise<{success:boolean, keys?:string[], message?:string}>}
+   */
+  async function verifyPayment(orderId, binanceOrderId, turnstileToken = "") {
+    if (MOCK_MODE) {
+      await sleep(MOCK_DELAY);
+
+      // Demo: verify with TEST-OK succeeds, TEST-FAIL always fails
+      if (orderId === "MOCK-ORDER-FAIL" || binanceOrderId === "MOCK-BINANCE-FAIL-99999") {
+        return { success: false, message: "Payment not found (demo: TEST-FAIL path)" };
+      }
+      return {
+        success: true,
+        keys: ["KEY-1", "KEY-2", "KEY-3"].slice(0, 3),
+        message: "Payment verified (demo)"
+      };
+    }
+
+    // REAL backend call (Step 2)
+    const res = await fetch(API_BASE + "/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, binanceOrderId, turnstileToken })
+    });
+    if (!res.ok) throw new Error("Verification failed");
+    return res.json();
+  }
+
+  /**
+   * checkKey — validates a key in real-time (revoked/expired/active).
+   * @param {string} key
+   * @returns {Promise<{valid:boolean, message:string}>}
+   */
+  async function checkKey(key) {
+    if (MOCK_MODE) {
+      await sleep(MOCK_DELAY);
+      if (!key || key.trim() === "") return { valid: false, message: "No key provided" };
+      if (key === "TEST-OK")      return { valid: true,  message: "Key is valid (demo)" };
+      if (key === "TEST-FAIL")    return { valid: false, message: "Key expired or revoked (demo)" };
+      return { valid: false, message: "Invalid key (demo)" };
+    }
+
+    // REAL backend call (Step 2)
+    const res = await fetch(API_BASE + "/check-key", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key })
+    });
+    if (!res.ok) throw new Error("Key check failed");
+    return res.json();
+  }
+
+  // ============================================================
+  // UI LOGIC — Wire pricing cards, modal, and key check
+  // ============================================================
+
+  /** Render pricing cards from PRICING_CONFIG */
+  function renderPricing() {
+    const section = document.getElementById("pricing-section");
+    section.innerHTML = "<h2>Choose a Package</h2>";
+    PRICING_CONFIG.forEach(pkg => {
+      const card = document.createElement("div");
+      card.className = "price-card";
+      card.innerHTML = `
+        <h3>${pkg.label}</h3>
+        <p>$${pkg.price.toFixed(2)} — ${pkg.keys} key(s)</p>
+        <button onclick="startOrder('${pkg.id}')">Buy</button>
+      `;
+      section.appendChild(card);
+    });
+  }
+
+  /** User clicks "Buy" → fetch createOrder, open modal */
+  async function startOrder(packageId) {
+    // Demo toggle: TEST-OK / TEST-FAIL used instead of real package
+    const demoId =
+      packageId === "basic" ? "TEST-OK" :
+      packageId === "pro"   ? "TEST-FAIL" :
+      packageId;
+
+    showModal(true);
+    setModalState("loading", "Creating order…");
+
+    try {
+      const order = await createOrder(demoId);
+      document.getElementById("order-id-display").textContent = order.orderId;
+      document.getElementById("order-amount").textContent = order.amount.toFixed(3);
+      setModalState("idle", "");
+    } catch (e) {
+      setModalState("error", e.message);
+    }
+  }
+
+  /** User clicks "Verify Payment" in modal */
+  async function verifyOrder() {
+    const orderId = document.getElementById("order-id-display").textContent;
+    const binanceId = document.getElementById("binance-order-id").value;
+    const token = ""; // mock — real Turnstile token captured via widget callback
+
+    setModalState("loading", "Verifying…");
+
+    try {
+      const result = await verifyPayment(orderId, binanceId, token);
+      if (result.success) {
+        setModalState("success", result.message + "\nKeys: " + result.keys.join(", "));
+      } else {
+        setModalState("error", result.message);
+      }
+    } catch (e) {
+      setModalState("error", e.message);
+    }
+  }
+
+  /** Wire verify button */
+  document.getElementById("verify-payment-btn")
+    .addEventListener("click", verifyOrder);
+
+  /** Check key button handler */
+  async function runCheckKey() {
+    const key = document.getElementById("key-input").value;
+    const statusEl = document.getElementById("key-status");
+    statusEl.innerHTML = "Checking…";
+
+    try {
+      const result = await checkKey(key);
+      statusEl.innerHTML = `<span class="${result.valid ? "success" : "error"}">${result.message}</span>`;
+    } catch (e) {
+      statusEl.innerHTML = `<span class="error">${e.message}</span>`;
+    }
+  }
+
+  document.getElementById("check-key-btn")
+    .addEventListener("click", runCheckKey);
+
+  /** Helper to toggle modal + set status text */
+  function showModal(show) {
+    document.getElementById("payment-modal").style.display = show ? "flex" : "none";
+  }
+
+  function setModalState(type, msg) {
+    const el = document.getElementById("verify-msg");
+    if (!msg) { el.textContent = ""; return; }
+    el.innerHTML = `<span class="${type === "error" ? "error" : type === "success" ? "success" : ""}">${msg}</span>`;
+    if (type === "loading") {
+      document.getElementById("verify-payment-btn").disabled = true;
+    } else {
+      document.getElementById("verify-payment-btn").disabled = false;
+    }
+  }
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  renderPricing();
+</script>
+</body>
+</html>
