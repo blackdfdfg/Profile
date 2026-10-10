@@ -18,11 +18,7 @@ TURNSTILE_SITE_KEY = "0x4AAAAAAFSnuuZQxgR2vaN7"
 GOOGLE_OAUTH_CLIENT_ID = "193851036400-ev0tduebrbfm4opq5tarbnb0vuuooq75.apps.googleusercontent.com"
 GOOGLE_REDIRECT_URI = "https://fixasif.com/agent/auth/google/callback"
 # Put the Chrome Web Store link here after the extension is published
-EXTENSION_URL = "https://chromewebstore.google.com/"
+EXTENSION_URL = "https://chromewebstore.google.com/detail/aflcefboffcaidnhpdpipkgolabifnfe"
 
 # Secrets (set with `wrangler secret put NAME`, never commit them):
 # BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
-
-# Run near Singapore so Binance API is reachable (Binance blocks US)
-[placement]
-region = "aws:ap-southeast-1"
