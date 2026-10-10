@@ -132,7 +132,7 @@ async function checkTurnstile(env, token, ip) {
 }
 
 /* ---------------- Binance Pay history ---------------- */
-const BINANCE_HOSTS = ["https://api.binance.com", "https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com", "https://api-gcp.binance.com"];
+const BINANCE_HOSTS = ["https://api-gcp.binance.com", "https://api.binance.com", "https://api1.binance.com", "https://api2.binance.com", "https://api3.binance.com"];
 async function binancePayTransactions(env, startTime, endTime) {
   const qs = "startTime=" + startTime + "&endTime=" + endTime + "&limit=100&recvWindow=10000&timestamp=" + now();
   const key = await crypto.subtle.importKey("raw", enc.encode(env.BINANCE_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);

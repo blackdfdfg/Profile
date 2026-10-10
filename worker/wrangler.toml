@@ -22,3 +22,7 @@ EXTENSION_URL = "https://chromewebstore.google.com/"
 
 # Secrets (set with `wrangler secret put NAME`, never commit them):
 # BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
+
+# Run near Singapore so Binance API is reachable (Binance blocks US)
+[placement]
+region = "aws:ap-southeast-1"
