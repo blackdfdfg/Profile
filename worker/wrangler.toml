@@ -1,0 +1,24 @@
+name = "fixasif-premium"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+workers_dev = true
+
+[triggers]
+crons = ["17 3 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fixasif-db"
+database_id = "4947a275-e265-4c58-8ad8-d12b013e642f"
+
+[vars]
+BINANCE_UID = "516036906"
+SITE_ORIGIN = "https://fixasif.com"
+TURNSTILE_SITE_KEY = "0x4AAAAAAFSnuuZQxgR2vaN7"
+GOOGLE_OAUTH_CLIENT_ID = "193851036400-ev0tduebrbfm4opq5tarbnb0vuuooq75.apps.googleusercontent.com"
+GOOGLE_REDIRECT_URI = "https://fixasif.com/agent/auth/google/callback"
+# Put the Chrome Web Store link here after the extension is published
+EXTENSION_URL = "https://chromewebstore.google.com/"
+
+# Secrets (set with `wrangler secret put NAME`, never commit them):
+# BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
