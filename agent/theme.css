@@ -157,3 +157,12 @@ body{letter-spacing:-.005em}
   .footer{padding-bottom:90px}
   .tg-float{bottom:84px}
 }
+
+/* Buy Access Key — same size as install */
+.btn-key{background:linear-gradient(135deg,#f472b6 0%,#a855f7 50%,#6366f1 100%);color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(236,72,153,.32),inset 0 1px 0 rgba(255,255,255,.35);position:relative;overflow:hidden}
+.btn-key:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-key::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.6s ease-in-out infinite 1.8s}
+.key-ic{background:rgba(10,4,25,.85);color:#f9a8d4}
+.btn-key .btn-2l small{opacity:.85}
+.hero-mini i{color:var(--cyan)}
+@media (max-width:760px){.hero-cta .btn-key{width:100%;justify-content:flex-start}}
