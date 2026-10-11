@@ -1,4 +1,4 @@
-/* Fix X Agent — Premium Access Key site */
+/* Fix X Agent, Premium Access Key site */
 (() => {
 "use strict";
 const API = "https://fixasif-premium.fixasif.workers.dev";
@@ -6,13 +6,14 @@ const TK = "fxa_token";
 const SUPPORT = "https://t.me/Fixasif";
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const nd = (t) => String(t).replace(/\s*[\u2014\u2013]\s*/g, ", ");
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const fmtDate = (t) => t ? new Date(t).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
-const fmtDT = (t) => t ? new Date(t).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtDate = (t) => t ? new Date(t).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "-";
+const fmtDT = (t) => t ? new Date(t).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 const FALLBACK_PACKAGES = [
   { id: "starter", name: "Starter", price: 5, keys: 1, months: 3 },
   { id: "standard", name: "Standard", price: 7, keys: 1, months: 6, badge: "Save 30%" },
-  { id: "bestvalue", name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value — Save 55%" }
+  { id: "bestvalue", name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value · Save 55%" }
 ];
 let CFG = { packages: FALLBACK_PACKAGES, extensionUrl: "#", supportUrl: SUPPORT, orderMinutes: 30 };
 let USER = null, pendingPlan = null, order = null, timerId = 0, tsWidget = null, lastReceipt = null, KEYS = [];
@@ -24,24 +25,24 @@ async function api(path, opts = {}) {
   if (t) h.Authorization = "Bearer " + t;
   let r;
   try { r = await fetch(API + path, { method: opts.method || (opts.body ? "POST" : "GET"), headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined }); }
-  catch (e) { throw Object.assign(new Error("Network error — check your internet and try again"), { code: "network" }); }
+  catch (e) { throw Object.assign(new Error("Network error, check your internet and try again"), { code: "network" }); }
   let d = {}; try { d = await r.json(); } catch (e) {}
   if (!r.ok || d.ok === false) {
     if (r.status === 401 && t && !opts.keepToken) { localStorage.removeItem(TK); USER = null; renderUser(); }
-    throw Object.assign(new Error(d.message || "Something went wrong — please try again"), { code: d.error, status: r.status });
+    throw Object.assign(new Error(d.message || "Something went wrong, please try again"), { code: d.error, status: r.status });
   }
   return d;
 }
 
 /* ---------- toast / copy ---------- */
 let toastT = 0;
-function toast(msg) { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600); }
+function toast(msg) { const el = $("#toast"); el.textContent = nd(msg); el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600); }
 async function copy(text, label = "Copied") {
   try { await navigator.clipboard.writeText(text); }
   catch (e) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (_) {} ta.remove(); }
   toast(label + " ✓");
 }
-function setMsg(form, text, type) { const m = $(".form-msg", form); if (!m) return; m.textContent = text || ""; m.className = "form-msg" + (type ? " " + type : ""); }
+function setMsg(form, text, type) { const m = $(".form-msg", form); if (!m) return; m.textContent = nd(text || ""); m.className = "form-msg" + (type ? " " + type : ""); }
 function busy(btn, on, label) { if (!btn) return; if (on) { btn.dataset.html = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + (label || "Please wait…"); } else { btn.disabled = false; if (btn.dataset.html) btn.innerHTML = btn.dataset.html; } }
 
 /* ---------- session ---------- */
@@ -122,7 +123,7 @@ async function googleLogin() {
 }
 
 /* ---------- pricing ---------- */
-const FEATS = ["AI replies with your own key", "Auto-Scroll like & comment", "Link Engage (bulk links)", "PC Chrome + Kiwi Android", "Works with 1 X account"];
+const FEATS = ["AI replies with your own key", "Auto-Scroll like & comment", "Link Engage (bulk links)", "PC + Android phone", "Works with 1 X account"];
 function renderPricing() {
   const pk = (CFG.packages && CFG.packages.length ? CFG.packages : FALLBACK_PACKAGES);
   const base = pk[0] ? pk[0].price / pk[0].months : 0;
@@ -151,7 +152,7 @@ function startCheckout(planId) {
   if (!p) return;
   if (!USER) { pendingPlan = planId; openAuth("signup"); toast("Create an account (or log in) to buy"); return; }
   order = { plan: p };
-  $("#payPlan").textContent = `${p.name} — ${p.months} months · ${p.price} USDT`;
+  $("#payPlan").textContent = `${p.name}: ${p.months} months · ${p.price} USDT`;
   showStep(1);
   $("#xUserForm").hidden = false; $("#payDetails").hidden = true; setMsg($("#xUserForm"), "");
   $("#xUserForm").xUsername.value = localStorage.getItem("fxa_last_xuser") || "";
@@ -163,7 +164,7 @@ const cleanX = (v) => String(v || "").trim().replace(/^@+/, "").replace(/^https?
 async function submitXUser(e) {
   e.preventDefault();
   const f = e.target, xu = cleanX(f.xUsername.value);
-  if (!/^[a-z0-9_]{1,15}$/.test(xu)) return setMsg(f, "Enter a valid X username (letters, numbers, _ — max 15)", "err");
+  if (!/^[a-z0-9_]{1,15}$/.test(xu)) return setMsg(f, "Enter a valid X username (letters, numbers, _, max 15)", "err");
   setMsg(f, ""); const btn = $("#xUserBtn"); busy(btn, true, "Creating your order…");
   try {
     const d = await api("/create-order", { body: { packageId: order.plan.id, xUsername: xu } });
@@ -172,7 +173,7 @@ async function submitXUser(e) {
     $("#payXUser").textContent = "@" + d.xUsername;
     $("#payAmount").textContent = d.amount;
     $$(".amt-inline").forEach((el) => (el.textContent = d.amount));
-    $("#payUid").textContent = d.binanceUid || CFG.binanceUid || "—";
+    $("#payUid").textContent = d.binanceUid || CFG.binanceUid || "-";
     f.hidden = true; $("#payDetails").hidden = false;
     startTimer(d.expiresAt);
   } catch (err) {
@@ -188,7 +189,7 @@ function startTimer(exp) {
     const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
     el.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     el.parentElement.classList.toggle("late", left < 5 * 60000);
-    if (!left) { stopTimer(); toast("Order expired — please start again"); }
+    if (!left) { stopTimer(); toast("Order expired, please start again"); }
   };
   tick(); timerId = setInterval(tick, 1000);
 }
@@ -229,7 +230,7 @@ function receiptData(d, k) {
 }
 function receiptHTML(r) {
   return `<div class="receipt">
-    <div class="receipt-head"><span>FIX X AGENT · RECEIPT</span><span>#${esc(r.orderId || "—")}</span></div>
+    <div class="receipt-head"><span>FIX X AGENT · RECEIPT</span><span>#${esc(r.orderId || "-")}</span></div>
     ${r.key ? `<div class="receipt-key"><b>${esc(r.key)}</b><button class="icon-btn" type="button" data-copy="${esc(r.key)}" title="Copy key"><i class="fa-regular fa-copy"></i></button></div>` : ""}
     <dl>
       <dt>X username</dt><dd>@${esc(r.xUsername)}</dd>
@@ -237,13 +238,13 @@ function receiptHTML(r) {
       <dt>Purchased</dt><dd>${fmtDT(r.purchased)}</dd>
       <dt>Expires</dt><dd>${fmtDate(r.expires)}</dd>
       <dt>Amount</dt><dd>${esc(r.amount)} ${esc(r.currency)}</dd>
-      <dt>Binance Order ID</dt><dd class="mono">${esc(r.binanceOrderId || "—")}</dd>
+      <dt>Binance Order ID</dt><dd class="mono">${esc(r.binanceOrderId || "-")}</dd>
       ${r.email ? `<dt>Account</dt><dd>${esc(r.email)}</dd>` : ""}
     </dl></div>`;
 }
 function receiptText(r) {
   return [
-    "FIX X AGENT — PURCHASE RECEIPT", "==============================", "",
+    "FIX X AGENT: PURCHASE RECEIPT", "==============================", "",
     "Access Key:        " + (r.key || "(pending)"),
     "X username:        @" + r.xUsername,
     "Plan:              " + r.plan + (r.months ? " (" + r.months + " months)" : ""),
@@ -269,7 +270,7 @@ function downloadReceipt(r) {
 function printReceipt(r) {
   if (!r) return;
   const row = (a, b) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`;
-  $("#printArea").innerHTML = `<div class="pr"><h1>Fix X Agent — Receipt</h1>
+  $("#printArea").innerHTML = `<div class="pr"><h1>Fix X Agent: Receipt</h1>
     <div class="pk">${esc(r.key || "(pending)")}</div>
     <table>${row("X username", "@" + r.xUsername)}${row("Plan", r.plan + (r.months ? " (" + r.months + " months)" : ""))}${row("Purchased", fmtDT(r.purchased))}${row("Expires", fmtDate(r.expires))}${row("Amount", r.amount + " " + r.currency)}${row("Binance Order ID", r.binanceOrderId || "-")}${row("Order #", r.orderId || "-")}${r.email ? row("Account", r.email) : ""}</table>
     <ol><li>Install the extension: ${esc(r.extensionUrl)}</li><li>Enter the Access Key + X username @${esc(r.xUsername)}.</li><li>The key works only with this X username.</li></ol>
@@ -279,7 +280,7 @@ function printReceipt(r) {
 function showSuccess(d) {
   const k = d.keys && d.keys[0];
   lastReceipt = receiptData(d, k);
-  $("#successMsg").textContent = d.pending ? d.message : "Your key is ready. The receipt is also saved in your account.";
+  $("#successMsg").textContent = d.pending ? nd(d.message) : "Your key is ready. The receipt is also saved in your account.";
   $("#successReceipt").innerHTML = receiptHTML(lastReceipt);
   setExtLinks(d.extensionUrl);
   showStep(3); confetti();
@@ -305,7 +306,7 @@ function keyCard(k, i) {
         <button class="icon-btn" data-print="${i}" title="Print receipt"><i class="fa-solid fa-print"></i></button>
       </div></div>
     <div class="keymeta"><span class="status ${esc(k.status)}">${esc(k.status)}</span>
-      <span>X: <b>@${esc(k.xUsername || "—")}</b></span><span>Plan: <b>${esc(k.package || "—")}</b></span>
+      <span>X: <b>@${esc(k.xUsername || "-")}</b></span><span>Plan: <b>${esc(k.package || "-")}</b></span>
       <span>Bought: <b>${fmtDate(k.soldAt)}</b></span><span>Expires: <b>${fmtDate(k.expiresAt)}</b>${k.status === "Active" ? ` (${days} days left)` : ""}</span>
       ${k.binanceOrderId ? `<span>Binance: <b class="mono">${esc(k.binanceOrderId)}</b></span>` : ""}</div>
     ${k.status === "Active" ? `<div class="life"><span style="width:${pct.toFixed(1)}%"></span></div>` : ""}
@@ -325,7 +326,7 @@ async function loadKeys() {
     $("#stActive").textContent = act.length;
     $("#stTotal").textContent = KEYS.length;
     const nx = act.map((k) => k.expiresAt).filter(Boolean).sort((a, b) => a - b)[0];
-    $("#stNext").textContent = nx ? fmtDate(nx) : "—";
+    $("#stNext").textContent = nx ? fmtDate(nx) : "-";
     list.innerHTML = KEYS.length ? KEYS.map(keyCard).join("") : `<div class="card empty"><i class="fa-solid fa-key"></i><p>No keys yet.</p><a href="#pricing" class="btn btn-primary" data-go-pricing>Buy your first key</a></div>`;
     observeReveal();
   } catch (e) { list.innerHTML = `<div class="card empty"><p>${esc(e.message)}</p></div>`; }
@@ -335,7 +336,7 @@ async function loadHistory() {
   try {
     const d = await api("/dashboard/history"); const o = d.orders || [];
     $("#historyEmpty").hidden = !!o.length;
-    body.innerHTML = o.map((x) => `<tr><td>${fmtDate(x.paidAt || x.createdAt)}</td><td>${esc(x.package)}</td><td>@${esc(x.xUsername || "—")}</td><td>${esc(x.amount)} ${esc(x.currency)}</td><td class="mono">${esc(x.binanceOrderId || "—")}</td><td><span class="status Paid">Paid</span></td></tr>`).join("");
+    body.innerHTML = o.map((x) => `<tr><td>${fmtDate(x.paidAt || x.createdAt)}</td><td>${esc(x.package)}</td><td>@${esc(x.xUsername || "-")}</td><td>${esc(x.amount)} ${esc(x.currency)}</td><td class="mono">${esc(x.binanceOrderId || "-")}</td><td><span class="status Paid">Paid</span></td></tr>`).join("");
   } catch (e) { body.innerHTML = `<tr><td colspan="6">${esc(e.message)}</td></tr>`; }
 }
 async function submitProfile(e) {
@@ -435,7 +436,7 @@ window.addEventListener("hashchange", route);
 
 /* ---------- boot ---------- */
 $("#year").textContent = new Date().getFullYear();
-const waitCfg = api("/config").then((c) => { CFG = { ...CFG, ...c }; }).catch(() => {}).finally(() => { renderPricing(); setExtLinks(); });
+const waitCfg = api("/config").then((c) => { CFG = { ...CFG, ...c }; (CFG.packages || []).forEach((p) => { ["badge", "name"].forEach((k) => { if (typeof p[k] === "string") p[k] = p[k].replace(/\s*[\u2014\u2013]\s*/g, " · "); }); }); }).catch(() => {}).finally(() => { renderPricing(); setExtLinks(); });
 renderPricing(); setExtLinks(); observeReveal(); scrambleKey(); setInterval(scrambleKey, 6000);
 api("/stats").then((s) => {
   if ((s.keysSold || 0) < 10) { const hs = $(".hero-stats"); if (hs) hs.hidden = true; return; }

@@ -1,4 +1,4 @@
-/* Fix X Agent — picture guide tabs + install link fallback */
+/* Fix X Agent, picture guide tabs + install link fallback */
 (function () {
   var STORE = "https://chromewebstore.google.com/detail/aflcefboffcaidnhpdpipkgolabifnfe";
   function fixLinks() {

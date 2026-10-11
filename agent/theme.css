@@ -1,4 +1,4 @@
-/* Fix X Agent — "Aurora" theme (overrides style.css) */
+/* Fix X Agent, "Aurora" theme (overrides style.css) */
 :root{
   --font:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --bg:#05060f; --grid:rgba(120,200,255,.035);
@@ -34,7 +34,7 @@ body{letter-spacing:-.005em}
 .announce a:hover{text-decoration:underline}
 .announce .fa-chrome{color:var(--cyan)}
 
-/* Install button — the star of the page */
+/* Install button, the star of the page */
 .btn-install{background:linear-gradient(135deg,#bef264 0%,#a3e635 40%,#22d3ee 100%);color:#04121a;font-weight:800;box-shadow:0 10px 30px rgba(163,230,53,.28),inset 0 1px 0 rgba(255,255,255,.5);position:relative;overflow:hidden}
 .btn-install:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(163,230,53,.45),inset 0 1px 0 rgba(255,255,255,.5)}
 .btn-install::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.6s ease-in-out infinite}
@@ -158,7 +158,7 @@ body{letter-spacing:-.005em}
   .tg-float{bottom:84px}
 }
 
-/* Buy Access Key — same size as install */
+/* Buy Access Key, same size as install */
 .btn-key{background:linear-gradient(135deg,#f472b6 0%,#a855f7 50%,#6366f1 100%);color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(236,72,153,.32),inset 0 1px 0 rgba(255,255,255,.35);position:relative;overflow:hidden}
 .btn-key:hover{transform:translateY(-2px);box-shadow:0 14px 40px rgba(236,72,153,.5),inset 0 1px 0 rgba(255,255,255,.35)}
 .btn-key::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.6s ease-in-out infinite 1.8s}
@@ -166,3 +166,26 @@ body{letter-spacing:-.005em}
 .btn-key .btn-2l small{opacity:.85}
 .hero-mini i{color:var(--cyan)}
 @media (max-width:760px){.hero-cta .btn-key{width:100%;justify-content:flex-start}}
+
+/* Access Key button: as colorful as the install button */
+.btn-key{background:linear-gradient(135deg,#fde047 0%,#fb923c 45%,#f472b6 100%);color:#1a0812;box-shadow:0 10px 30px rgba(251,146,60,.35),inset 0 1px 0 rgba(255,255,255,.55)}
+.btn-key:hover{box-shadow:0 14px 40px rgba(251,146,60,.55),inset 0 1px 0 rgba(255,255,255,.55)}
+.btn-key::after{background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%)}
+.key-ic{background:#1a0812;color:#fde047}
+.btn-key .btn-2l small{opacity:.75}
+.ann-sep{margin:0 8px;opacity:.5}
+.announce a.ann-key{color:#fdba74;margin-left:0}
+.qs-btn{margin-top:14px}
+.install-btns{display:flex;gap:12px;flex-wrap:wrap}
+.footer a.foot-key{color:#fdba74;font-weight:700}
+@media (max-width:760px){
+  .install-btns{width:100%}
+  .install-btns .btn-xl{width:100%;justify-content:flex-start}
+  .nav-actions{gap:6px}
+  .ann-sep{display:none}
+  .announce a{display:inline-block;margin:2px 4px}
+}
+@media (max-width:760px){
+  .nav-links:not(.open){visibility:hidden}
+  .nav-links{transition:transform .25s,visibility .25s}
+}

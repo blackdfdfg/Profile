@@ -1,4 +1,4 @@
-/* Fix X Agent — follows fixasif.com design language (glass + neon, Sora / JetBrains Mono) */
+/* Fix X Agent, follows fixasif.com design language (glass + neon, Sora / JetBrains Mono) */
 :root{
   --font:'Sora',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --mono:'JetBrains Mono','Courier New',monospace;
