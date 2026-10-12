@@ -1,643 +1,252 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FixAsif | Full Stack Developer &amp; Automation Specialist</title>
-  <meta name="description" content="Asif (FixAsif) — Full Stack Developer, Bug Fixer and Automation Specialist. I build websites, fix broken code and automate the boring parts." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FixAsif | X &amp; Discord Automation, Portfolio Design, Community</title>
+  <meta name="description" content="Asif (FixAsif): X and Discord automation, glassy portfolio websites, X content creation and community management. Builder of Fix X Agent.">
+  <meta name="theme-color" content="#04050d">
+  <meta property="og:title" content="FixAsif | Automation, Design &amp; Community">
+  <meta property="og:description" content="X and Discord automation, glassy portfolio websites, X content and community management.">
+  <meta property="og:image" content="https://fixasif.com/assets/images/avatar.webp">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@Fixasif">
+  <link rel="icon" type="image/webp" href="assets/images/avatar.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="theme-wipe" id="themeWipe"></div>
+  <!-- Background -->
+  <div class="aurora" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span><span class="a4"></span></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="cursor-glow" aria-hidden="true"></div>
 
-  <!-- Animated background glow orbs (backlit glass source) -->
-  <div class="bg-orbs" aria-hidden="true">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-    <div class="grid-overlay"></div>
-  </div>
+  <!-- Nav -->
+  <header class="nav" id="nav">
+    <a href="#top" class="logo" aria-label="FixAsif home">
+      <img src="assets/images/avatar.webp" alt="" width="34" height="34">
+      <span>Fix<b>Asif</b></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#about">About</a>
+      <a href="#services">Services</a>
+      <a href="#agent" class="nav-agent"><i class="fa-solid fa-robot"></i> Fix Agent</a>
+      <a href="#design">Design</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <a href="#contact" class="btn btn-glow btn-sm nav-cta">Let's talk <i class="fa-solid fa-arrow-right"></i></a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span></button>
+  </header>
 
-  <nav class="navbar" id="navbar">
-    <div class="nav-container">
-      <a href="#home" class="nav-logo">Fix<span>Asif</span></a>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#home" class="nav-link active">Home</a></li>
-        <li><a href="#about" class="nav-link">About</a></li>
-        <li><a href="#services" class="nav-link">Services</a></li>
-        <li><a href="#automation" class="nav-link">Automation</a></li>
-        <li><a href="#portfolio" class="nav-link">Portfolio</a></li>
-        <li><a href="#contact" class="nav-link">Contact</a></li>
-      </ul>
-      <div class="nav-right">
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-          <i class="fas fa-moon" id="themeIcon"></i>
-        </button>
-        <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
-          <span></span><span></span><span></span>
-        </button>
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero wrap">
+      <div class="hero-left">
+        <div class="status reveal"><span class="pulse"></span> Online · Open for collabs</div>
+        <h1 class="reveal">Hey, I'm <span class="name">Asif</span><span class="wave">👋</span></h1>
+        <div class="roles reveal">I do <span class="typed" id="typedRole"></span><span class="caret"></span></div>
+
+        <div class="terminal glass reveal">
+          <div class="term-bar"><i></i><i></i><i></i><span>about-me.txt</span></div>
+          <pre class="term-body" id="aboutType" aria-label="About Asif"></pre>
+        </div>
+
+        <div class="hero-cta reveal">
+          <a href="#services" class="btn btn-glow"><i class="fa-solid fa-bolt"></i> What I do</a>
+          <a href="/agent/" class="btn btn-glass"><i class="fa-solid fa-robot"></i> See my X service</a>
+        </div>
+        <div class="socials reveal">
+          <a href="https://x.com/Fixasif" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="https://t.me/FixAsif" target="_blank" rel="noopener" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+          <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+          <a href="mailto:fixasif.connect@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+        </div>
+      </div>
+
+      <div class="hero-right reveal">
+        <div class="lanyard" aria-hidden="true"></div>
+        <div class="idcard" id="idcard">
+          <div class="id-shine"></div>
+          <div class="id-clip"></div>
+          <div class="id-top"><span class="mono">FIXASIF.ID</span><span class="id-live"><span class="pulse"></span> LIVE</span></div>
+          <div class="id-avatar"><img src="assets/images/avatar.webp" alt="Asif avatar" width="640" height="640"></div>
+          <div class="id-name">Asif <i class="fa-solid fa-circle-check"></i></div>
+          <div class="id-handle mono">@Fixasif</div>
+          <div class="id-tags"><span>Automation</span><span>Design</span><span>Community</span></div>
+          <div class="id-rows">
+            <div><span>Focus</span><b>X · Discord</b></div>
+            <div><span>Builds</span><b>Fix X Agent</b></div>
+            <div><span>Mode</span><b class="ok">Shipping</b></div>
+          </div>
+          <div class="id-code mono"><span class="bars"></span>FX-0X-2026</div>
+        </div>
+        <div class="orbit o1 glass"><i class="fa-brands fa-x-twitter"></i></div>
+        <div class="orbit o2 glass"><i class="fa-brands fa-discord"></i></div>
+        <div class="orbit o3 glass"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee" aria-hidden="true">
+      <div class="mq-track">
+        <span>X Automation</span><i>✦</i><span>Discord Automation</span><i>✦</i><span>Portfolio Design</span><i>✦</i><span>X Content</span><i>✦</i><span>Community Management</span><i>✦</i>
+        <span>X Automation</span><i>✦</i><span>Discord Automation</span><i>✦</i><span>Portfolio Design</span><i>✦</i><span>X Content</span><i>✦</i><span>Community Management</span><i>✦</i>
       </div>
     </div>
-  </nav>
 
-  <main>
-    <!-- ===================== HOME / HERO ===================== -->
-    <section class="hero" id="home">
-      <div class="hero-container">
-        <div class="hero-text">
-          <p class="hero-greeting fade-up"><span class="status-dot"></span> Available for work</p>
-          <h1 class="hero-name fade-up">
-            Hello, I'm <span class="gradient-text">Asif</span>
-          </h1>
-          <h2 class="hero-role fade-up">
-            Full Stack Developer <span class="sep">&bull;</span> Bug Fixer <span class="sep">&bull;</span> Automation Specialist
-          </h2>
-          <p class="hero-bio fade-up">
-            I turn messy ideas into clean, working systems. From websites and web apps to
-            X&nbsp;automation and Discord bots — I write the code, fix what's broken, and
-            automate the boring parts so you can focus on what actually matters.
-          </p>
-          <div class="hero-buttons fade-up">
-            <a href="#contact" class="btn btn-primary">
-              <span>Hire Me</span>
-              <i class="fas fa-arrow-right"></i>
-            </a>
-            <a href="#" class="btn btn-secondary" id="downloadCV">
-              <span>Download CV</span>
-              <i class="fas fa-download"></i>
-            </a>
-          </div>
-          <div class="hero-socials fade-up">
-            <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="social-icon" aria-label="X / Twitter">
-              <i class="fab fa-x-twitter"></i>
-            </a>
-            <a href="https://t.me/FixAsif" target="_blank" rel="noopener" class="social-icon" aria-label="Telegram">
-              <i class="fab fa-telegram-plane"></i>
-            </a>
-            <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" class="social-icon" aria-label="Discord">
-              <i class="fab fa-discord"></i>
-            </a>
-            <a href="mailto:fixasif.connect@gmail.com" class="social-icon" aria-label="Email">
-              <i class="fas fa-envelope"></i>
-            </a>
-          </div>
+    <!-- ABOUT -->
+    <section id="about" class="section wrap">
+      <div class="about glass reveal">
+        <div class="about-head">
+          <span class="kicker mono">// about</span>
+          <h2>Who is <span class="grad">Asif?</span></h2>
         </div>
-
-        <!-- Hanging ID card -->
-        <div class="hero-card-wrapper fade-up">
-          <span class="string-clip" aria-hidden="true"></span>
-          <div class="id-card-string" id="stringEl"></div>
-          <div class="id-card" id="idCard">
-            <div class="id-card-inner">
-              <div class="id-card-photo">
-                <img src="assets/images/profile.png" alt="Asif" />
-                <span class="scanline"></span>
-              </div>
-
-              <div class="id-card-info">
-                <h3>Asif</h3>
-                <p>Full Stack Developer &amp; Automation Specialist</p>
-                <span class="id-card-tag">Code. Break. Rebuild.</span>
-              </div>
-
-              <div class="id-card-skills">
-                <div class="id-skill">
-                  <div class="id-skill-top"><span>JavaScript</span></div>
-                  <div class="id-skill-bar"><i style="--w:90%"></i></div>
-                </div>
-                <div class="id-skill">
-                  <div class="id-skill-top"><span>React</span></div>
-                  <div class="id-skill-bar"><i style="--w:85%"></i></div>
-                </div>
-                <div class="id-skill">
-                  <div class="id-skill-top"><span>Automation</span></div>
-                  <div class="id-skill-bar"><i style="--w:92%"></i></div>
-                </div>
-              </div>
-
-              <div class="id-card-meta">
-                <span>AGENT ID: FX-2026-X07</span>
-                <span class="id-status">🟢 Active</span>
-              </div>
-
-              <div class="id-card-socials">
-                <a href="https://x.com/Fixasif" target="_blank" rel="noopener" aria-label="X"><i class="fab fa-x-twitter"></i></a>
-                <a href="https://t.me/FixAsif" target="_blank" rel="noopener" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
-                <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
-                <a href="mailto:fixasif.connect@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
-              </div>
-
-              <div class="id-card-footer">
-                <div class="id-card-barcode">
-                  <div class="id-card-barcode-lines">
-                    <span style="width:2px"></span><span style="width:1px"></span><span style="width:3px"></span>
-                    <span style="width:1px"></span><span style="width:2px"></span><span style="width:1px"></span>
-                    <span style="width:3px"></span><span style="width:1px"></span><span style="width:2px"></span>
-                    <span style="width:1px"></span><span style="width:3px"></span><span style="width:1px"></span>
-                    <span style="width:2px"></span><span style="width:1px"></span><span style="width:3px"></span>
-                    <span style="width:1px"></span><span style="width:2px"></span><span style="width:1px"></span>
-                    <span style="width:3px"></span><span style="width:1px"></span><span style="width:2px"></span>
-                    <span style="width:1px"></span><span style="width:3px"></span>
-                  </div>
-                </div>
-                <span class="id-card-flag">FIXASIF</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <a href="#about" class="scroll-hint" aria-label="Scroll down">
-        <span></span>
-      </a>
-    </section>
-
-    <!-- ===================== ABOUT ===================== -->
-    <section class="section about" id="about">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Who is Asif?</span>
-        </h2>
-        <div class="about-grid">
-          <div class="glass-card about-card fade-up">
-            <p class="about-text">
-              I'm Asif — a <mark>full-stack developer</mark> and <mark>automation specialist</mark>
-              who turns messy ideas into clean, working systems. I build websites, fix broken
-              code, and automate the boring parts so people can focus on what actually matters.
-            </p>
-            <p class="about-text">
-              From portfolio websites and web apps to <mark>X (Twitter) automation</mark> and
-              Discord bots, I work across the stack — writing code,
-              <mark>debugging other people's projects</mark>, and building tools that run on
-              their own.
-            </p>
-            <p class="about-text">
-              Every project starts with understanding the actual problem, not just shipping
-              something that looks good. Clean code, clear communication, and real results —
-              that's the standard I hold myself to.
-            </p>
-            <div class="about-badges">
-              <span class="badge"><i class="fas fa-layer-group"></i> Full Stack</span>
-              <span class="badge"><i class="fas fa-robot"></i> Automation</span>
-              <span class="badge"><i class="fas fa-bug-slash"></i> Bug Fixing</span>
-              <span class="badge"><i class="fas fa-comments"></i> Clear Communication</span>
-            </div>
-          </div>
-
-          <div class="about-stats fade-up">
-            <div class="glass-card stat-card">
-              <i class="fas fa-diagram-project stat-icon"></i>
-              <span class="stat-number gradient-text" data-count="25" data-suffix="+">0</span>
-              <span class="stat-label">Projects Completed</span>
-            </div>
-            <div class="glass-card stat-card">
-              <i class="fas fa-clock stat-icon"></i>
-              <span class="stat-number gradient-text" data-count="3" data-suffix="+">0</span>
-              <span class="stat-label">Years of Experience</span>
-            </div>
-            <div class="glass-card stat-card">
-              <i class="fas fa-wand-magic-sparkles stat-icon"></i>
-              <span class="stat-number gradient-text" data-count="40" data-suffix="+">0</span>
-              <span class="stat-label">Automation Scripts Built</span>
-            </div>
+        <div class="about-body">
+          <p>I'm Asif, known on X as <b>@Fixasif</b>. I'm an <b>X content creator</b> and <b>community manager</b> who also builds the tools behind the work.</p>
+          <p>I automate the boring parts of <b>X and Discord</b>, so creators and projects stay active without living on their phones. And I design <b>glassy portfolio websites</b> that make people stop scrolling, just like this one.</p>
+          <div class="about-pills">
+            <span><i class="fa-brands fa-x-twitter"></i> Content creator on X</span>
+            <span><i class="fa-solid fa-people-group"></i> Community manager</span>
+            <span><i class="fa-solid fa-robot"></i> Builder of Fix X Agent</span>
+            <span><i class="fa-solid fa-gem"></i> Glass UI designer</span>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ===================== SERVICES ===================== -->
-    <section class="section services" id="services">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Services</span>
-        </h2>
-        <p class="section-intro fade-up">
-          I'm open to collaborations, freelance projects, and long-term partnerships —
-          whether you need something built from scratch, a stubborn bug hunted down, or a
-          workflow that finally runs itself.
-        </p>
+    <!-- SERVICES -->
+    <section id="services" class="section wrap">
+      <div class="sec-head reveal">
+        <span class="kicker mono">// services</span>
+        <h2>How I can <span class="grad">help you</span></h2>
+        <p>Pick one, or stack them together. Every project is shaped around you.</p>
+      </div>
 
-        <div class="services-grid">
-          <div class="glass-card service-card fade-up">
-            <div class="service-icon"><i class="fas fa-code"></i></div>
-            <h3>Web Development</h3>
-            <p>
-              Custom websites and web apps built from the ground up — responsive layouts,
-              clean architecture, and interfaces that feel fast and intentional. From landing
-              pages to full dashboards.
-            </p>
-            <div class="project-tags">
-              <span class="tag">HTML/CSS</span>
-              <span class="tag">JavaScript</span>
-              <span class="tag">React</span>
-              <span class="tag">Node.js</span>
-            </div>
-          </div>
+      <div class="bento">
+        <article class="card glass s-x reveal">
+          <span class="num mono">01</span>
+          <div class="ic"><i class="fa-brands fa-x-twitter"></i></div>
+          <h3>X Automation</h3>
+          <p>Smart tools that keep your X account active: AI replies, auto engagement, bulk link engage and smooth human-like timing.</p>
+          <ul><li>AI replies with your own model</li><li>Auto-Scroll like and comment</li><li>Bulk Link Engage</li></ul>
+          <a href="/agent/" class="card-link">Try Fix X Agent <i class="fa-solid fa-arrow-right"></i></a>
+        </article>
+        <article class="card glass s-dc reveal">
+          <span class="num mono">02</span>
+          <div class="ic"><i class="fa-brands fa-discord"></i></div>
+          <h3>Discord Automation</h3>
+          <p>Custom bots that run your server for you, day and night.</p>
+          <ul><li>Auto-moderation and roles</li><li>Welcome and verification</li><li>Alerts, tickets and webhooks</li></ul>
+        </article>
+        <article class="card glass s-pf reveal">
+          <span class="num mono">03</span>
+          <div class="ic"><i class="fa-solid fa-gem"></i></div>
+          <h3>Portfolio Design</h3>
+          <p>Glassy, modern portfolio websites built from scratch. No templates, fast on every screen.</p>
+          <ul><li>Custom glass UI design</li><li>Mobile first and fast</li><li>Domain and hosting setup</li></ul>
+        </article>
+        <article class="card glass s-ct reveal">
+          <span class="num mono">04</span>
+          <div class="ic"><i class="fa-solid fa-pen-nib"></i></div>
+          <h3>X Content Creation</h3>
+          <p>Threads, posts and visuals that explain your project simply and grow real attention.</p>
+          <ul><li>Threads and posts</li><li>Content calendar</li><li>Visuals that stand out</li></ul>
+        </article>
+        <article class="card glass s-cm reveal">
+          <span class="num mono">05</span>
+          <div class="ic"><i class="fa-solid fa-people-group"></i></div>
+          <h3>Community Management</h3>
+          <p>I grow and care for your community on X, Discord and Telegram, so members actually show up.</p>
+          <ul><li>Daily engagement and moderation</li><li>Campaigns, raids and events</li><li>Spaces and AMA support</li></ul>
+        </article>
+      </div>
+    </section>
 
-          <div class="glass-card service-card fade-up">
-            <div class="service-icon"><i class="fas fa-bug-slash"></i></div>
-            <h3>Bug Fixing &amp; Debugging</h3>
-            <p>
-              Existing code that misbehaves, breaks on edge cases, or runs slow — I trace the
-              real cause instead of patching symptoms, then leave it cleaner and more stable
-              than I found it.
-            </p>
-            <div class="project-tags">
-              <span class="tag">Debugging</span>
-              <span class="tag">Refactoring</span>
-              <span class="tag">Performance</span>
-              <span class="tag">Code Review</span>
-            </div>
+    <!-- FIX AGENT -->
+    <section id="agent" class="section wrap">
+      <div class="agent glass reveal">
+        <div class="agent-copy">
+          <span class="badge-new"><i class="fa-solid fa-star"></i> My own product</span>
+          <h2>Fix <span class="grad">X Agent</span></h2>
+          <p>A Chrome extension I built for X. It writes helpful AI replies, likes and comments while it scrolls, and works through a whole list of post links for you.</p>
+          <div class="agent-feats">
+            <span><i class="fa-solid fa-wand-magic-sparkles"></i> AI replies</span>
+            <span><i class="fa-solid fa-arrows-up-down"></i> Auto-Scroll</span>
+            <span><i class="fa-solid fa-link"></i> Link Engage</span>
+            <span><i class="fa-brands fa-chrome"></i> Chrome Web Store</span>
           </div>
-
-          <div class="glass-card service-card fade-up">
-            <div class="service-icon"><i class="fas fa-handshake-angle"></i></div>
-            <h3>Project Support &amp; Consultation</h3>
-            <p>
-              Stuck mid-project or not sure how to approach a feature? I jump in with
-              technical guidance, code review, and hands-on help to move your project forward
-              without the guesswork.
-            </p>
-            <div class="project-tags">
-              <span class="tag">Consultation</span>
-              <span class="tag">Architecture</span>
-              <span class="tag">Mentoring</span>
-              <span class="tag">Planning</span>
-            </div>
-          </div>
-
-          <div class="glass-card service-card fade-up">
-            <div class="service-icon"><i class="fas fa-robot"></i></div>
-            <h3>Automation Solutions</h3>
-            <p>
-              Repetitive tasks that eat your time — posting, moderating, syncing, reporting —
-              turned into tools that run on their own. More detail in the Automation section
-              below.
-            </p>
-            <div class="project-tags">
-              <span class="tag">Python</span>
-              <span class="tag">Node.js</span>
-              <span class="tag">APIs</span>
-              <span class="tag">Bots</span>
-            </div>
-          </div>
+          <a href="/agent/" class="btn btn-glow btn-lg"><i class="fa-solid fa-robot"></i> Open fixasif.com/agent <i class="fa-solid fa-arrow-right"></i></a>
         </div>
+        <a href="/agent/" class="agent-shot" aria-label="Open Fix X Agent">
+          <div class="mini-bar"><i></i><i></i><i></i><span>fixasif.com/agent</span></div>
+          <img src="agent/assets/guide/scene.webp" alt="Fix X Agent running on X" width="1600" height="1475">
+        </a>
+      </div>
+    </section>
 
-        <div class="glass-card cta-card fade-up">
-          <div class="cta-text">
-            <h3>Have a project in mind?</h3>
-            <p>For collaboration or project support, just send a DM — I usually reply within a day.</p>
-          </div>
-          <div class="cta-actions">
-            <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="btn btn-small">
-              <i class="fab fa-x-twitter"></i> DM on X
-            </a>
-            <a href="https://t.me/FixAsif" target="_blank" rel="noopener" class="btn btn-small">
-              <i class="fab fa-telegram-plane"></i> Telegram
-            </a>
-            <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" class="btn btn-small">
-              <i class="fab fa-discord"></i> Discord
-            </a>
-          </div>
+    <!-- DESIGN -->
+    <section id="design" class="section wrap">
+      <div class="sec-head reveal">
+        <span class="kicker mono">// design</span>
+        <h2>Portfolios that feel <span class="grad">like glass</span></h2>
+        <p>You are looking at one right now. I can build yours the same way, shaped around your work.</p>
+      </div>
+      <div class="design">
+        <div class="stack reveal" aria-hidden="true">
+          <div class="pane p1 glass"><div class="pl"></div><div class="pl s"></div><div class="pc"></div></div>
+          <div class="pane p2 glass"><div class="av"></div><div class="pl"></div><div class="pl s"></div><div class="pbtn"></div></div>
+          <div class="pane p3 glass"><div class="ring"></div><div class="pl"></div><div class="pl s"></div></div>
+        </div>
+        <div class="design-list">
+          <div class="dl glass reveal"><i class="fa-solid fa-palette"></i><div><h3>Your style, not a template</h3><p>Colors, fonts and layout made for your personality.</p></div></div>
+          <div class="dl glass reveal"><i class="fa-solid fa-mobile-screen"></i><div><h3>Perfect on phones</h3><p>Looks sharp from big screens to the smallest phone.</p></div></div>
+          <div class="dl glass reveal"><i class="fa-solid fa-gauge-high"></i><div><h3>Light and fast</h3><p>Hand-written code. Loads quickly, no heavy builders.</p></div></div>
+          <div class="dl glass reveal"><i class="fa-solid fa-globe"></i><div><h3>Ready to go live</h3><p>I help with your domain and free hosting setup.</p></div></div>
+          <a href="#contact" class="btn btn-glow reveal"><i class="fa-solid fa-gem"></i> I want one like this</a>
         </div>
       </div>
     </section>
 
-    <!-- ===================== AUTOMATION ===================== -->
-    <section class="section automation" id="automation">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Automation</span>
-        </h2>
-        <p class="section-intro fade-up">
-          I build automation tools to save time and boost productivity — repetitive work
-          handled by code that keeps running while you get on with the real work.
-        </p>
-
-        <div class="automation-grid">
-          <div class="glass-card automation-card fade-up">
-            <div class="automation-head">
-              <div class="service-icon"><i class="fab fa-x-twitter"></i></div>
-              <h3>X (Twitter) Automation</h3>
-            </div>
-            <p>
-              Automated posting and scheduling, engagement bots that keep your account active,
-              and analytics tracking that turns raw numbers into decisions — all without you
-              sitting at the keyboard.
-            </p>
-            <ul class="feature-list">
-              <li><i class="fas fa-check"></i> Auto-posting &amp; content scheduling</li>
-              <li><i class="fas fa-check"></i> Engagement &amp; growth bots</li>
-              <li><i class="fas fa-check"></i> Analytics tracking &amp; reports</li>
-            </ul>
-            <div class="project-tags">
-              <span class="tag">Twitter API</span>
-              <span class="tag">Python</span>
-              <span class="tag">Node.js</span>
-              <span class="tag">Cron</span>
-            </div>
-          </div>
-
-          <div class="glass-card automation-card fade-up">
-            <div class="automation-head">
-              <div class="service-icon"><i class="fab fa-discord"></i></div>
-              <h3>Discord Automation</h3>
-            </div>
-            <p>
-              Custom bots that handle the daily grind of running a server: keeping the peace,
-              managing roles, greeting new members, and pushing notifications where they
-              matter.
-            </p>
-            <ul class="feature-list">
-              <li><i class="fas fa-check"></i> Custom bot development</li>
-              <li><i class="fas fa-check"></i> Auto-moderation &amp; role management</li>
-              <li><i class="fas fa-check"></i> Welcome messages &amp; notifications</li>
-            </ul>
-            <div class="project-tags">
-              <span class="tag">Discord.js</span>
-              <span class="tag">Node.js</span>
-              <span class="tag">MongoDB</span>
-              <span class="tag">Webhooks</span>
-            </div>
-          </div>
-
-          <div class="glass-card automation-card fade-up">
-            <div class="automation-head">
-              <div class="service-icon"><i class="fas fa-gears"></i></div>
-              <h3>Workflow Automation</h3>
-            </div>
-            <p>
-              The unglamorous repetitive tasks — file handling, data sync, scraping,
-              reporting, notifications — wired together into a single pipeline that runs
-              reliably on a schedule.
-            </p>
-            <ul class="feature-list">
-              <li><i class="fas fa-check"></i> Data sync &amp; scraping pipelines</li>
-              <li><i class="fas fa-check"></i> Scheduled reports &amp; alerts</li>
-              <li><i class="fas fa-check"></i> Multi-service integrations</li>
-            </ul>
-            <div class="project-tags">
-              <span class="tag">Python</span>
-              <span class="tag">APIs</span>
-              <span class="tag">Docker</span>
-              <span class="tag">Automation Tools</span>
-            </div>
-          </div>
-        </div>
+    <!-- PROCESS -->
+    <section class="section wrap">
+      <div class="sec-head reveal">
+        <span class="kicker mono">// process</span>
+        <h2>Simple from <span class="grad">hello</span> to launch</h2>
       </div>
+      <ol class="process">
+        <li class="glass reveal"><span class="mono">01</span><h3>Say hi</h3><p>Send a DM on X, Telegram or Discord.</p></li>
+        <li class="glass reveal"><span class="mono">02</span><h3>Plan</h3><p>We agree on what you need and the price.</p></li>
+        <li class="glass reveal"><span class="mono">03</span><h3>Build</h3><p>I build it and share updates as I go.</p></li>
+        <li class="glass reveal"><span class="mono">04</span><h3>Launch</h3><p>It goes live, and I stay around for help.</p></li>
+      </ol>
     </section>
 
-    <!-- ===================== PORTFOLIO ===================== -->
-    <section class="section portfolio" id="portfolio">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Portfolio</span>
-        </h2>
-        <p class="section-intro fade-up">
-          I design and build custom portfolio websites for developers, creators, and
-          professionals — including this one you're viewing right now. Every layout is built
-          from scratch, shaped around your work, and finished with the same 3D glass
-          treatment you're looking at.
-        </p>
-
-        <!-- 3D glass showcase — visual styles I can build -->
-        <div class="showcase-stage fade-up">
-          <div class="showcase-grid">
-            <article class="glass-pane pane-a">
-              <div class="pane-glow"></div>
-              <div class="pane-ui">
-                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
-              </div>
-              <div class="pane-body">
-                <div class="pane-avatar"></div>
-                <div class="pane-line lg"></div>
-                <div class="pane-line"></div>
-                <div class="pane-line sm"></div>
-              </div>
-              <span class="pane-label">Developer Portfolio</span>
-            </article>
-
-            <article class="glass-pane pane-b">
-              <div class="pane-glow"></div>
-              <div class="pane-ui">
-                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
-              </div>
-              <div class="pane-chart">
-                <i style="--h:42%"></i><i style="--h:70%"></i><i style="--h:55%"></i>
-                <i style="--h:88%"></i><i style="--h:64%"></i><i style="--h:78%"></i>
-              </div>
-              <span class="pane-label">Creator Dashboard</span>
-            </article>
-
-            <article class="glass-pane pane-c">
-              <div class="pane-glow"></div>
-              <div class="pane-ui">
-                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
-              </div>
-              <div class="pane-cards">
-                <span></span><span></span><span></span><span></span>
-              </div>
-              <span class="pane-label">Product Showcase</span>
-            </article>
-
-            <article class="glass-pane pane-d">
-              <div class="pane-glow"></div>
-              <div class="pane-ui">
-                <span class="pane-dot"></span><span class="pane-dot"></span><span class="pane-dot"></span>
-              </div>
-              <div class="pane-profile">
-                <div class="pane-ring"></div>
-                <div class="pane-line lg"></div>
-                <div class="pane-line"></div>
-              </div>
-              <span class="pane-label">Personal Brand</span>
-            </article>
-          </div>
-        </div>
-
-        <div class="portfolio-points">
-          <div class="glass-card point-card fade-up">
-            <div class="point-icon"><i class="fas fa-pen-ruler"></i></div>
-            <h3>Custom Design</h3>
-            <p>No templates — the layout, colors, and typography are shaped around your work and your personality.</p>
-          </div>
-          <div class="glass-card point-card fade-up">
-            <div class="point-icon"><i class="fas fa-mobile-screen"></i></div>
-            <h3>Fully Responsive</h3>
-            <p>Looks intentional on every screen, from ultrawide monitors down to the smallest phone.</p>
-          </div>
-          <div class="glass-card point-card fade-up">
-            <div class="point-icon"><i class="fas fa-gem"></i></div>
-            <h3>3D Glass Aesthetic</h3>
-            <p>Depth, gloss, and translucency built in — the modern glassmorphism look done right.</p>
-          </div>
-          <div class="glass-card point-card fade-up">
-            <div class="point-icon"><i class="fas fa-bolt"></i></div>
-            <h3>Fast &amp; Clean</h3>
-            <p>Hand-written HTML, CSS, and JavaScript. No bloat, no heavy frameworks, quick to load.</p>
-          </div>
-        </div>
-
-        <div class="glass-card portfolio-cta fade-up">
-          <div class="cta-text">
-            <h3>Want a portfolio like this?</h3>
-            <p>Tell me about your work and I'll design a 3D glass portfolio built specifically for you.</p>
-          </div>
-          <div class="cta-actions">
-            <a href="#contact" class="btn btn-primary">
-              <span>Start a Project</span>
-              <i class="fas fa-arrow-right"></i>
-            </a>
-            <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="btn btn-small">
-              <i class="fab fa-x-twitter"></i> DM on X
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== SKILLS ===================== -->
-    <section class="section skills" id="skills">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Skills</span>
-        </h2>
-        <div class="skills-grid fade-up">
-          <div class="glass-card skill-card">
-            <i class="fab fa-html5 skill-icon"></i><span>HTML5</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-css3-alt skill-icon"></i><span>CSS3</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-js skill-icon"></i><span>JavaScript</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-react skill-icon"></i><span>React</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-node-js skill-icon"></i><span>Node.js</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-python skill-icon"></i><span>Python</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-discord skill-icon"></i><span>Discord.js</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-git-alt skill-icon"></i><span>Git</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fab fa-docker skill-icon"></i><span>Docker</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fas fa-database skill-icon"></i><span>MongoDB</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fas fa-fire skill-icon"></i><span>Firebase</span>
-          </div>
-          <div class="glass-card skill-card">
-            <i class="fas fa-gears skill-icon"></i><span>Automation Tools</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===================== CONTACT ===================== -->
-    <section class="section contact" id="contact">
-      <div class="container">
-        <h2 class="section-title fade-up">
-          <span class="gradient-text">Get In Touch</span>
-        </h2>
-        <div class="contact-grid">
-          <div class="glass-card contact-card fade-up">
-            <!--
-              FORM SETUP:
-              This form uses Formspree by default. Replace YOUR_FORM_ID below with your
-              real Formspree endpoint: https://formspree.io/f/YOUR_FORM_ID
-              Alternatively, swap to EmailJS and call emailjs.sendForm(...) in script.js.
-              The JS also has a mailto: fallback if the endpoint is not configured.
-            -->
-            <form id="contactForm" class="contact-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-              <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" name="name" placeholder="Your name" required />
-              </div>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="your@email.com" required />
-              </div>
-              <div class="form-group">
-                <label for="message">Message</label>
-                <textarea id="message" name="message" rows="5" placeholder="Tell me about your project..." required></textarea>
-              </div>
-              <button type="submit" class="btn btn-primary btn-full">
-                <span>Send Message</span>
-                <i class="fas fa-paper-plane"></i>
-              </button>
-              <p class="form-note" id="formNote"></p>
-            </form>
-          </div>
-
-          <div class="contact-info fade-up">
-            <div class="glass-card contact-info-card">
-              <h3>Let's Connect</h3>
-              <p>
-                Whether it's a project, a stubborn bug, or an automation idea — my inbox is
-                open. Pick whichever platform you prefer.
-              </p>
-              <div class="contact-links">
-                <a href="https://x.com/Fixasif" target="_blank" rel="noopener" class="contact-link">
-                  <i class="fab fa-x-twitter"></i>
-                  <span class="contact-link-text"><strong>X (Twitter)</strong>@Fixasif</span>
-                </a>
-                <a href="https://t.me/FixAsif" target="_blank" rel="noopener" class="contact-link">
-                  <i class="fab fa-telegram-plane"></i>
-                  <span class="contact-link-text"><strong>Telegram</strong>@FixAsif</span>
-                </a>
-                <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" class="contact-link">
-                  <i class="fab fa-discord"></i>
-                  <span class="contact-link-text"><strong>Discord</strong>fixasif</span>
-                </a>
-                <a href="mailto:fixasif.connect@gmail.com" class="contact-link">
-                  <i class="fas fa-envelope"></i>
-                  <span class="contact-link-text"><strong>Email</strong>fixasif.connect@gmail.com</span>
-                </a>
-              </div>
-            </div>
-          </div>
+    <!-- CONTACT -->
+    <section id="contact" class="section wrap">
+      <div class="contact glass reveal">
+        <span class="kicker mono">// let's talk</span>
+        <h2>Got an idea? <span class="grad">Let's build it.</span></h2>
+        <p>The fastest way to reach me is a DM. I usually reply within a day.</p>
+        <div class="links">
+          <a class="lk glass" href="https://x.com/Fixasif" target="_blank" rel="noopener"><i class="fa-brands fa-x-twitter"></i><div><small>X / Twitter</small><b>@Fixasif</b></div><i class="fa-solid fa-arrow-up-right-from-square go"></i></a>
+          <a class="lk glass" href="https://t.me/FixAsif" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i><div><small>Telegram</small><b>@FixAsif</b></div><i class="fa-solid fa-arrow-up-right-from-square go"></i></a>
+          <a class="lk glass" href="https://discord.com/users/fixasif" target="_blank" rel="noopener"><i class="fa-brands fa-discord"></i><div><small>Discord</small><b>fixasif</b></div><i class="fa-solid fa-arrow-up-right-from-square go"></i></a>
+          <button class="lk glass" type="button" id="copyMail"><i class="fa-solid fa-envelope"></i><div><small>Email (tap to copy)</small><b>fixasif.connect@gmail.com</b></div><i class="fa-regular fa-copy go"></i></button>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-content">
-        <p>&copy; 2026 <span class="gradient-text">FixAsif</span>. Code. Break. Rebuild.</p>
-        <div class="footer-socials">
-          <a href="https://x.com/Fixasif" target="_blank" rel="noopener" aria-label="X / Twitter">
-            <i class="fab fa-x-twitter"></i>
-          </a>
-          <a href="https://t.me/FixAsif" target="_blank" rel="noopener" aria-label="Telegram">
-            <i class="fab fa-telegram-plane"></i>
-          </a>
-          <a href="https://discord.com/users/fixasif" target="_blank" rel="noopener" aria-label="Discord">
-            <i class="fab fa-discord"></i>
-          </a>
-          <a href="mailto:fixasif.connect@gmail.com" aria-label="Email">
-            <i class="fas fa-envelope"></i>
-          </a>
-        </div>
-      </div>
-    </div>
+  <footer class="footer wrap">
+    <div class="logo"><img src="assets/images/avatar.webp" alt="" width="28" height="28"><span>Fix<b>Asif</b></span></div>
+    <nav><a href="#services">Services</a><a href="/agent/">Fix X Agent</a><a href="#contact">Contact</a></nav>
+    <p>© <span id="yr"></span> FixAsif · Automate. Design. Grow.</p>
   </footer>
 
+  <div class="toast" id="toast"></div>
   <script src="script.js"></script>
 </body>
 </html>
