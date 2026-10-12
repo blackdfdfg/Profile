@@ -189,3 +189,4 @@ body{letter-spacing:-.005em}
   .nav-links:not(.open){visibility:hidden}
   .nav-links{transition:transform .25s,visibility .25s}
 }
+@media (max-width:760px){.footer{padding-bottom:40px}.tg-float{bottom:18px}}
