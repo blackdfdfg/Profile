@@ -17,7 +17,7 @@ a{color:#c4b5fd}p{color:#9a97ab}</style></head>
   if (q.get("error")) return fail("Google sign-in was cancelled.");
   if (!code || !state || !st || state !== st || !ver) return fail("This sign-in link is invalid or expired. Please try again.");
   try {
-    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver }) });
+    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver, referralCode: sessionStorage.getItem("fxa_referral") || "" }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.token) return fail((d.message || "Could not sign you in.").replace(/</g, "&lt;"));
     localStorage.setItem("fxa_token", d.token);

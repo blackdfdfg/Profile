@@ -1,4 +1,5 @@
-/* FixAsif Agent — Cloudflare Worker (D1 binding: DB)
+import { featureRoute, grantWelcome, attachReferral, fulfillOrder, flushNotifications, cleanupFeatures } from "./features.js";
+/* FixAsif Agent - Cloudflare Worker (D1 binding: DB)
    Secrets: BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET,
             GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
    Optional: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (sale + low-stock alerts)
@@ -7,12 +8,12 @@
 const PACKAGES = {
   starter:   { name: "Starter",    price: 5,  keys: 1, months: 3 },
   standard:  { name: "Standard",   price: 7,  keys: 1, months: 6,  badge: "Save 30%" },
-  bestvalue: { name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value \u2014 Save 55%" }
+  bestvalue: { name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value - Save 55%" }
 };
 const ORDER_TTL_MS = 30 * 60 * 1000;     // pay within 30 minutes
 const VERIFY_GRACE_MS = 30 * 60 * 1000;  // may still verify up to 30 min after expiry if paid in time
 const LOW_STOCK = 5;
-const DEFAULT_EXTENSION_URL = "https://chromewebstore.google.com/detail/free-vpn-for-chrome-vpn-p/majdfhpaihoncoakbjgbdhglocklcgno?hl=en";
+const DEFAULT_EXTENSION_URL = "https://chromewebstore.google.com/detail/aflcefboffcaidnhpdpipkgolabifnfe";
 const SUPPORT_URL = "https://t.me/Fixasif";
 const extUrl = (env) => env.EXTENSION_URL || DEFAULT_EXTENSION_URL;
 const JWT_TTL_S = 30 * 24 * 3600;
@@ -107,14 +108,10 @@ const publicUser = (u) => ({ id: u.id, email: u.email, name: u.name || "", googl
 
 /* ---------------- rate limit (D1, fixed window) ---------------- */
 async function rateLimit(env, key, limit, windowMs) {
-  const t = now();
-  const row = await env.DB.prepare("SELECT count, window_start FROM rate_limits WHERE k = ?").bind(key).first();
-  if (!row || t - row.window_start > windowMs) {
-    await env.DB.prepare("INSERT INTO rate_limits (k, count, window_start) VALUES (?, 1, ?) ON CONFLICT(k) DO UPDATE SET count = 1, window_start = excluded.window_start").bind(key, t).run();
-    return;
-  }
-  if (row.count >= limit) fail(429, "rate_limited", "Too many attempts \u2014 please wait a few minutes and try again");
-  await env.DB.prepare("UPDATE rate_limits SET count = count + 1 WHERE k = ?").bind(key).run();
+  const t=now();
+  const row=await env.DB.prepare("INSERT INTO rate_limits(k,count,window_start) VALUES (?,1,?) ON CONFLICT(k) DO UPDATE SET count=CASE WHEN ?-window_start>? THEN 1 ELSE count+1 END,window_start=CASE WHEN ?-window_start>? THEN ? ELSE window_start END RETURNING count")
+    .bind(key,t,t,windowMs,t,windowMs,t).first();
+  if(row.count>limit)fail(429,"rate_limited","Too many attempts. Please wait and try again.");
 }
 
 /* ---------------- Turnstile ---------------- */
@@ -149,7 +146,7 @@ async function binancePayTransactions(env, startTime, endTime) {
     } catch (e) { lastErr = String(e).slice(0, 200); }
   }
   console.log("binance error", lastErr);
-  fail(502, "binance_unavailable", "Payment service is temporarily unavailable \u2014 please try again in a minute");
+  fail(502, "binance_unavailable", "Payment service is temporarily unavailable - please try again in a minute");
 }
 function txAmountUSDT(tx) {
   // Received payments are positive. Prefer fundsDetail (exact USDT part).
@@ -217,6 +214,9 @@ async function route(req, env, ctx) {
   const M = req.method;
   const ip = clientIp(req);
 
+  const featureResponse = await featureRoute(req, env, ctx, { json, body, fail, requireUser, rateLimit, normX, now, clientIp, timingSafeEq });
+  if (featureResponse) return featureResponse;
+
   if (M === "GET" && (p === "/" || p === "/health")) return json(req, env, { ok: true, service: "fixasif-premium" });
 
   if (M === "GET" && p === "/config") {
@@ -228,6 +228,7 @@ async function route(req, env, ctx) {
       googleRedirectUri: env.GOOGLE_REDIRECT_URI,
       extensionUrl: extUrl(env),
       supportUrl: SUPPORT_URL,
+      creditRates: [{ min: 500, max: 999, unitPrice: 0.0002 }, { min: 1000, max: 4999, unitPrice: 0.00018 }, { min: 5000, unitPrice: 0.00016 }],
       orderMinutes: ORDER_TTL_MS / 60000
     });
   }
@@ -247,10 +248,11 @@ async function route(req, env, ctx) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) fail(400, "bad_email", "Enter a valid email address");
     if (pw.length < 8) fail(400, "weak_password", "Password must be at least 8 characters");
     const exists = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
-    if (exists) fail(409, "email_taken", "An account with this email already exists \u2014 please log in");
+    if (exists) fail(409, "email_taken", "An account with this email already exists - please log in");
     const name = String(b.name || "").trim().slice(0, 60) || email.split("@")[0];
     const u = await env.DB.prepare("INSERT INTO users (email, password_hash, name, created_at) VALUES (?, ?, ?, ?) RETURNING *")
       .bind(email, await hashPassword(pw), name, now()).first();
+    await attachReferral(env, u, b.referralCode, ip);
     return json(req, env, await sessionFor(env, u));
   }
   if (M === "POST" && p === "/auth/login") {
@@ -258,7 +260,7 @@ async function route(req, env, ctx) {
     const b = await body(req);
     const u = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(normEmail(b.email)).first();
     if (!u || !u.password_hash || !(await verifyPassword(String(b.password || ""), u.password_hash))) {
-      if (u && !u.password_hash && u.google_id) fail(401, "use_google", "This account uses Google sign-in \u2014 tap \u201cContinue with Google\u201d");
+      if (u && !u.password_hash && u.google_id) fail(401, "use_google", "This account uses Google sign-in - tap \u201cContinue with Google\u201d");
       fail(401, "bad_credentials", "Wrong email or password");
     }
     return json(req, env, await sessionFor(env, u));
@@ -284,7 +286,7 @@ async function route(req, env, ctx) {
     if (b.codeVerifier) form.set("code_verifier", b.codeVerifier);
     const tr = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: form });
     const tok = await tr.json();
-    if (!tr.ok || !tok.access_token) fail(401, "google_failed", "Google sign-in failed \u2014 please try again");
+    if (!tr.ok || !tok.access_token) fail(401, "google_failed", "Google sign-in failed - please try again");
     const ir = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: "Bearer " + tok.access_token } });
     const info = await ir.json();
     if (!info.sub || !info.email || info.email_verified === false) fail(401, "google_failed", "Google account email is not verified");
@@ -293,7 +295,10 @@ async function route(req, env, ctx) {
     if (!u) {
       u = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
       if (u) u = await env.DB.prepare("UPDATE users SET google_id = ?, name = COALESCE(NULLIF(name,''), ?) WHERE id = ? RETURNING *").bind(info.sub, info.name || "", u.id).first();
-      else u = await env.DB.prepare("INSERT INTO users (email, name, google_id, created_at) VALUES (?, ?, ?, ?) RETURNING *").bind(email, (info.name || email.split("@")[0]).slice(0, 60), info.sub, now()).first();
+      else {
+        u = await env.DB.prepare("INSERT INTO users (email, name, google_id, created_at) VALUES (?, ?, ?, ?) RETURNING *").bind(email, (info.name || email.split("@")[0]).slice(0, 60), info.sub, now()).first();
+        await attachReferral(env, u, b.referralCode, ip);
+      }
     }
     return json(req, env, await sessionFor(env, u));
   }
@@ -310,7 +315,7 @@ async function route(req, env, ctx) {
     const pkg = PACKAGES[b.packageId];
     if (!pkg) fail(400, "bad_package", "Unknown package");
     const xu = normX(b.xUsername);
-    if (!/^[a-z0-9_]{1,15}$/.test(xu)) fail(400, "bad_username", "Enter a valid X username (letters, numbers, _ \u2014 max 15)");
+    if (!/^[a-z0-9_]{1,15}$/.test(xu)) fail(400, "bad_username", "Enter a valid X username (letters, numbers, _ - max 15)");
     // reuse a still-open order for the same package + username (prevents spam)
     const open = await env.DB.prepare("SELECT * FROM orders WHERE user_id = ? AND package = ? AND x_username = ? AND status = 'pending' AND expires_at > ? ORDER BY id DESC LIMIT 1")
       .bind(u.id, b.packageId, xu, now() + 5 * 60e3).first();
@@ -329,39 +334,49 @@ async function route(req, env, ctx) {
     if (!(await checkTurnstile(env, b.turnstileToken, ip))) fail(403, "human_failed", "Human verification failed");
 
     const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?").bind(Number(b.orderId), u.id).first();
-    if (!order) fail(404, "order_not_found", "Order not found \u2014 please start again");
+    if (!order) fail(404, "order_not_found", "Order not found - please start again");
 
     // Idempotent: already paid with this Binance order -> return the same keys
     if (order.status === "paid") {
       if (order.binance_order_id !== binanceOrderId) fail(409, "order_used", "This order is already paid with another Order ID");
-      const keys = await claimKeysForOrder(env, order, u.id);
+      const keys = order.kind === "credits" ? [] : await claimKeysForOrder(env, order, u.id);
+      await fulfillOrder(env, order, u, keys);
+      ctx.waitUntil(flushNotifications(env));
       return json(req, env, verifyResponse(env, order, keys));
     }
-    const used = await env.DB.prepare("SELECT id FROM orders WHERE binance_order_id = ?").bind(binanceOrderId).first();
+    const used = await env.DB.prepare("SELECT order_id FROM payment_receipts WHERE transaction_id = ?").bind(binanceOrderId).first();
     if (used) fail(409, "order_id_used", "Order ID already used");
     if (now() > order.expires_at + VERIFY_GRACE_MS) {
       await env.DB.prepare("UPDATE orders SET status = 'expired' WHERE id = ? AND status = 'pending'").bind(order.id).run();
-      fail(410, "order_expired", "Order expired \u2014 please create a new order");
+      fail(410, "order_expired", "Order expired - please create a new order");
     }
 
     const from = order.created_at - 10 * 60e3;
     const to = Math.min(now(), order.expires_at + VERIFY_GRACE_MS);
     const txs = await binancePayTransactions(env, from, to);
     const tx = txs.find((t) => txIds(t).includes(binanceOrderId));
-    if (!tx) fail(404, "payment_not_found", "Payment not found \u2014 check the Order ID, or wait 1 minute and try again");
+    if (!tx) fail(404, "payment_not_found", "Payment not found - check the Order ID, or wait 1 minute and try again");
+    const aliases = txIds(tx);
+    const priorPayment = await env.DB.prepare("SELECT id FROM orders WHERE binance_order_id IN (SELECT value FROM json_each(?)) AND id != ? AND status='paid' LIMIT 1").bind(JSON.stringify(aliases),order.id).first();
+    if (priorPayment) fail(409,"order_id_used","This payment was already used");
     const amt = txAmountUSDT(tx);
     if (!(amt > 0)) fail(400, "not_received", "This Order ID is not a payment received by FixAsif");
-    if (Math.abs(amt - order.amount) > 0.000001) fail(400, "amount_mismatch", "Amount mismatch \u2014 please send exactly " + order.amount + " USDT");
+    if (Math.abs(amt - order.amount) > 0.000001) fail(400, "amount_mismatch", "Amount mismatch - please send exactly " + order.amount + " USDT");
     const txTime = Number(tx.transactionTime || 0);
-    if (txTime && (txTime < order.created_at - 5 * 60e3 || txTime > order.expires_at + 2 * 60e3)) fail(410, "order_expired", "Order expired \u2014 payment was not made within 30 minutes of this order");
+    if (txTime && (txTime < order.created_at - 5 * 60e3 || txTime > order.expires_at + 2 * 60e3)) fail(410, "order_expired", "Order expired - payment was not made within 30 minutes of this order");
     if (env.BINANCE_UID && tx.receiverInfo && tx.receiverInfo.binanceId && String(tx.receiverInfo.binanceId) !== String(env.BINANCE_UID)) {
       fail(400, "wrong_receiver", "This payment was not sent to FixAsif");
     }
 
+    const receiptId = String(tx.transactionId || tx.orderId || tx.orderNo || binanceOrderId);
+    // Reserve all aliases atomically so the same payment cannot fund two orders.
     // Mark paid (UNIQUE binance_order_id guarantees one use), then claim keys.
     try {
-      const r = await env.DB.prepare("UPDATE orders SET status = 'paid', binance_order_id = ?, paid_at = ? WHERE id = ? AND status = 'pending'")
-        .bind(binanceOrderId, now(), order.id).run();
+      const results = await env.DB.batch([
+        env.DB.prepare("INSERT INTO payment_receipts(transaction_id,order_id,created_at) SELECT ?,?,? WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='pending')").bind(receiptId,order.id,now(),order.id),
+        env.DB.prepare("UPDATE orders SET status = 'paid', binance_order_id = ?, paid_at = ? WHERE id = ? AND status = 'pending'").bind(binanceOrderId,now(),order.id)
+      ]);
+      const r = results[1];
       if (!r.meta || r.meta.changes !== 1) {
         const again = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(order.id).first();
         if (!again || again.binance_order_id !== binanceOrderId) fail(409, "order_id_used", "Order ID already used");
@@ -372,13 +387,12 @@ async function route(req, env, ctx) {
       throw e;
     }
     order.status = "paid"; order.binance_order_id = binanceOrderId; order.paid_at = now();
-    const keys = await claimKeysForOrder(env, order, u.id);
-    const left = await stockLeft(env);
-    const pkg = PACKAGES[order.package];
+    const keys = order.kind === "credits" ? [] : await claimKeysForOrder(env, order, u.id);
+    await fulfillOrder(env, order, u, keys);
     ctx.waitUntil((async () => {
-      await notify(env, "\u2705 New sale: " + pkg.name + " \u2014 " + order.amount + " USDT\nUser: " + u.email + "\nKeys: " + keys.length + "\nStock left: " + left);
-      if (keys.length < pkg.keys) await notify(env, "\u26a0\ufe0f OUT OF KEYS \u2014 order #" + order.id + " is paid but missing keys. Add keys now!");
-      else if (left < LOW_STOCK) await notify(env, "\u26a0\ufe0f Low stock: only " + left + " access keys left.");
+      const left = await stockLeft(env);
+      if (order.kind !== "credits" && (!keys.length || left < LOW_STOCK)) await notify(env, "Low stock: " + left + " access keys left. Order #" + order.id);
+      await flushNotifications(env);
     })());
     return json(req, env, verifyResponse(env, order, keys));
   }
@@ -393,8 +407,8 @@ async function route(req, env, ctx) {
     if (!/^[a-z0-9_]{1,15}$/.test(xu)) fail(400, "bad_username", "Enter a valid X username");
     const k = await env.DB.prepare("SELECT * FROM access_keys WHERE key = ?").bind(key).first();
     if (!k || k.status === "available") fail(401, "invalid_key", "Invalid Access Key");
-    if (k.status === "revoked") fail(403, "revoked", "This Access Key has been revoked \u2014 contact support");
-    if (!k.expires_at || k.expires_at <= now()) fail(403, "expired", "This Access Key has expired \u2014 buy a new key at fixasif.com/agent");
+    if (k.status === "revoked") fail(403, "revoked", "This Access Key has been revoked - contact support");
+    if (!k.expires_at || k.expires_at <= now()) fail(403, "expired", "This Access Key has expired - buy a new key at fixasif.com/agent");
     const t = now();
     if (!k.x_username) {
       const r = await env.DB.prepare("UPDATE access_keys SET x_username = ?, last_login_at = ? WHERE key = ? AND x_username IS NULL").bind(xu, t, key).run();
@@ -403,11 +417,13 @@ async function route(req, env, ctx) {
         if (!again || again.x_username !== xu) fail(403, "bound_other", "This Access Key is already linked to another X account");
       }
     } else if (k.x_username !== xu) {
-      fail(403, "bound_other", "This Access Key is linked to @" + k.x_username + " \u2014 log in with that X username");
+      fail(403, "bound_other", "This Access Key is linked to @" + k.x_username + " - log in with that X username");
     } else {
       await env.DB.prepare("UPDATE access_keys SET last_login_at = ? WHERE key = ?").bind(t, key).run();
     }
-    return json(req, env, { ok: true, xUsername: xu, expiresAt: k.expires_at, status: "Active" });
+    await grantWelcome(env, k.id);
+    const wallet = await env.DB.prepare("SELECT balance FROM credit_wallets WHERE key_id=?").bind(k.id).first();
+    return json(req, env, { ok: true, xUsername: xu, expiresAt: k.expires_at, status: "Active", balance: wallet.balance });
   }
 
   /* ----- dashboard ----- */
@@ -463,13 +479,14 @@ async function route(req, env, ctx) {
   fail(404, "not_found", "Not found");
 }
 function verifyResponse(env, order, keys) {
+  if (order.kind === "credits") return { ok: true, kind: "credits", orderId: order.id, quantity: order.credit_quantity, amount: order.amount, currency: "USDT", xUsername: order.x_username, message: "Credits added. Press Reload in the extension.", keys: [] };
   const pkg = PACKAGES[order.package];
   const base = { ok: true, orderId: order.id, package: pkg.name, months: pkg.months, amount: order.amount, currency: "USDT",
     binanceOrderId: order.binance_order_id, xUsername: order.x_username, paidAt: order.paid_at || now(),
     extensionUrl: extUrl(env), supportUrl: SUPPORT_URL };
   if (!keys.length) {
     return { ...base, pending: true, keys: [],
-      message: "Payment received! Your key will be delivered shortly \u2014 please contact support on Telegram." };
+      message: "Payment received! Your key will be delivered shortly - please contact support on Telegram." };
   }
   return { ...base, keys: keys.map((k) => ({ key: k.key, soldAt: k.sold_at, expiresAt: k.expires_at, xUsername: k.x_username })) };
 }
@@ -481,12 +498,13 @@ export default {
       return await route(req, env, ctx);
     } catch (e) {
       if (e instanceof HttpError) return json(req, env, { ok: false, error: e.code, message: e.message }, e.status);
-      console.log("error", e && e.stack || String(e));
-      return json(req, env, { ok: false, error: "server_error", message: "Something went wrong \u2014 please try again" }, 500);
+      console.log("worker error", e?.constructor?.name || "Error");
+      return json(req, env, { ok: false, error: "server_error", message: "Something went wrong - please try again" }, 500);
     }
   },
   // daily cleanup: expire stale pending orders, drop old rate-limit rows
   async scheduled(event, env) {
+    await cleanupFeatures(env);
     await env.DB.prepare("UPDATE orders SET status = 'expired' WHERE status = 'pending' AND expires_at < ?").bind(now() - VERIFY_GRACE_MS).run();
     await env.DB.prepare("DELETE FROM rate_limits WHERE window_start < ?").bind(now() - 86400e3).run();
   }

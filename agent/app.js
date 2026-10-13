@@ -16,6 +16,9 @@ const FALLBACK_PACKAGES = [
   { id: "bestvalue", name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value · Save 55%" }
 ];
 let CFG = { packages: FALLBACK_PACKAGES, extensionUrl: "#", supportUrl: SUPPORT, orderMinutes: 30 };
+const incomingRef=new URLSearchParams(location.search).get("ref");
+if(incomingRef && /^[A-Fa-f0-9]{16}$/.test(incomingRef))sessionStorage.setItem("fxa_referral",incomingRef.toUpperCase());
+if(document.getElementById("referralCode"))document.getElementById("referralCode").value=sessionStorage.getItem("fxa_referral")||"";
 let USER = null, pendingPlan = null, order = null, timerId = 0, tsWidget = null, lastReceipt = null, KEYS = [];
 
 /* ---------- api ---------- */
@@ -96,7 +99,7 @@ async function submitAuth(e) {
   if (password.length < 8) return setMsg(f, "Password must be at least 8 characters", "err");
   setMsg(f, ""); busy(btn, true);
   try {
-    const d = await api(authMode === "signup" ? "/auth/signup" : "/auth/login", { body: authMode === "signup" ? { email, password, name } : { email, password } });
+    const d = await api(authMode === "signup" ? "/auth/signup" : "/auth/login", { body: authMode === "signup" ? { email, password, name, referralCode: f.referralCode.value.trim() } : { email, password } });
     setSession(d); f.reset(); pwStrength(""); closeModal("authModal");
     toast(authMode === "signup" ? "Account created 🎉" : "Welcome back!");
     afterLogin();
@@ -113,6 +116,7 @@ const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replac
 const rand = (n) => b64url(crypto.getRandomValues(new Uint8Array(n)));
 async function googleLogin() {
   if (!CFG.googleClientId || !CFG.googleRedirectUri) { toast("Google sign-in is not available right now"); return; }
+  sessionStorage.setItem("fxa_referral",$("#referralCode").value.trim());
   const state = rand(16), verifier = rand(48);
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
   sessionStorage.setItem("fxa_g_state", state);
@@ -123,7 +127,7 @@ async function googleLogin() {
 }
 
 /* ---------- pricing ---------- */
-const FEATS = ["AI replies with your own key", "Auto-Scroll like & comment", "Link Engage (bulk links)", "PC + Android phone", "Works with 1 X account"];
+const FEATS = ["Your API or Fix Credits", "300 welcome credits once", "Auto-Scroll like & comment", "Link Engage (bulk links)", "PC + Android phone", "Works with 1 X account"];
 function renderPricing() {
   const pk = (CFG.packages && CFG.packages.length ? CFG.packages : FALLBACK_PACKAGES);
   const base = pk[0] ? pk[0].price / pk[0].months : 0;
@@ -305,6 +309,7 @@ function keyCard(k, i) {
         <button class="icon-btn" data-dl="${i}" title="Download receipt"><i class="fa-solid fa-file-arrow-down"></i></button>
         <button class="icon-btn" data-print="${i}" title="Print receipt"><i class="fa-solid fa-print"></i></button>
       </div></div>
+    <a href="tokens/" class="btn btn-ghost btn-sm">Top up credits</a>
     <div class="keymeta"><span class="status ${esc(k.status)}">${esc(k.status)}</span>
       <span>X: <b>@${esc(k.xUsername || "-")}</b></span><span>Plan: <b>${esc(k.package || "-")}</b></span>
       <span>Bought: <b>${fmtDate(k.soldAt)}</b></span><span>Expires: <b>${fmtDate(k.expiresAt)}</b>${k.status === "Active" ? ` (${days} days left)` : ""}</span>
@@ -363,11 +368,11 @@ function route() {
   if (h.startsWith("#buy=")) { const p = h.slice(5); history.replaceState(null, "", location.pathname); showView("landing"); waitCfg.then(() => startCheckout(p)); return; }
   if (h.startsWith("#/dashboard")) {
     if (!USER) { if (localStorage.getItem(TK)) return; showView("landing"); openAuth("login"); return; }
-    const tab = h.includes("history") ? "history" : h.includes("settings") ? "settings" : "keys";
+    const tab = h.includes("referrals") ? "referrals" : h.includes("history") ? "history" : h.includes("settings") ? "settings" : "keys";
     showView("dashboard"); window.scrollTo(0, 0);
     $$("[data-tab]").forEach((a) => a.classList.toggle("active", a.dataset.tab === tab));
     $$("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== tab));
-    if (tab === "keys") loadKeys(); else if (tab === "history") loadHistory();
+    if (tab === "keys") loadKeys(); else if (tab === "history") loadHistory(); else if(tab === "referrals")window.loadFixReferrals(api,esc);
     return;
   }
   showView("landing");

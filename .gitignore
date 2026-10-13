@@ -4,3 +4,10 @@ Thumbs.db
 *.log
 .vscode/
 .idea/
+
+node_modules/
+worker/dist/
+*.env
+seed.sql
+
+worker/node_modules

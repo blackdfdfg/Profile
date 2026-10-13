@@ -36,6 +36,8 @@
         <a href="#guide">Guide</a>
         <a href="#features">Features</a>
         <a href="#pricing">Pricing</a>
+        <a href="tokens/">Credits</a>
+        <a href="updates/">Updates</a>
         <a href="#faq">FAQ</a>
         <a href="https://fixasif.com" class="muted-link"><i class="fa-solid fa-arrow-left"></i> fixasif.com</a>
       </nav>
@@ -51,6 +53,8 @@
           <div class="dropdown" id="userDropdown" role="menu">
             <a href="#/dashboard" role="menuitem"><i class="fa-solid fa-key"></i> My keys</a>
             <a href="#/dashboard/history" role="menuitem"><i class="fa-solid fa-receipt"></i> Purchase history</a>
+            <a href="tokens/" role="menuitem">Top up credits</a>
+            <a href="#/dashboard/referrals" role="menuitem">Referrals</a>
             <a href="#/dashboard/settings" role="menuitem"><i class="fa-solid fa-gear"></i> Settings</a>
             <button type="button" data-logout role="menuitem"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
           </div>
@@ -324,6 +328,7 @@
     </section>
 
     <!-- FAQ -->
+    <section class="section container" id="credits"><div class="card" style="padding:32px"><p class="eyebrow">FIX CREDITS</p><h2>Your API or ours. Your choice.</h2><p>Every purchased Access Key gets 300 welcome credits once. Keep using your own API, or choose Fix Credits. Topups start at 500 credits with lower rates at 1,000 and 5,000.</p><a href="tokens/" class="btn btn-ghost">See credit prices →</a> <a href="updates/" class="btn btn-ghost">See what is new →</a></div></section>
     <section id="faq" class="section container narrow">
       <div class="section-head reveal">
         <span class="eyebrow mono">FAQ</span>
@@ -360,6 +365,8 @@
     <div class="dash-tabs" role="tablist">
       <a href="#/dashboard" data-tab="keys" class="active"><i class="fa-solid fa-key"></i> My keys</a>
       <a href="#/dashboard/history" data-tab="history"><i class="fa-solid fa-receipt"></i> History</a>
+      <a href="tokens/">Credits</a>
+      <a href="#/dashboard/referrals" data-tab="referrals">Referrals</a>
       <a href="#/dashboard/settings" data-tab="settings"><i class="fa-solid fa-gear"></i> Settings</a>
     </div>
 
@@ -376,6 +383,7 @@
       </div>
     </section>
 
+    <section class="dash-panel" data-panel="referrals" hidden><div id="referralContent"></div></section>
     <section class="dash-panel" data-panel="history" hidden>
       <div class="card table-card">
         <table class="table">
@@ -448,6 +456,7 @@
       <button class="btn btn-google" type="button" id="googleBtn"><svg viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg> Continue with Google</button>
       <div class="or"><span>or with email</span></div>
       <form id="authForm" class="form" novalidate>
+        <label class="signup-only">Referral code (optional)<input id="referralCode" name="referralCode" maxlength="16" autocomplete="off" placeholder="Referral code, if you have one"></label>
         <label class="signup-only">Name<input name="name" maxlength="60" autocomplete="name" placeholder="Your name"></label>
         <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
         <label>Password
@@ -533,6 +542,7 @@
 
   <div id="printArea" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="referrals.js"></script>
   <script src="app.js"></script>
   <script src="guide.js"></script>
 </body>

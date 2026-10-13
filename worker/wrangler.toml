@@ -1,10 +1,10 @@
 name = "fixasif-premium"
-main = "src/index.js"
+main = "dist/index.js"
 compatibility_date = "2024-09-23"
 workers_dev = true
 
 [triggers]
-crons = ["17 3 * * *"]
+crons = ["*/5 * * * *"]
 
 [[d1_databases]]
 binding = "DB"
@@ -22,3 +22,6 @@ EXTENSION_URL = "https://chromewebstore.google.com/detail/aflcefboffcaidnhpdpipk
 
 # Secrets (set with `wrangler secret put NAME`, never commit them):
 # BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
+
+[build]
+command = "npm run build"
