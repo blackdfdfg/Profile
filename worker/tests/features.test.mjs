@@ -6,7 +6,7 @@ import worker from '../src/index.js';
 import {creditQuote,grantWelcome,fulfillOrder,attachReferral} from '../src/features.js';
 class D1 {
  constructor(){this.db=new DatabaseSync(':memory:');this.db.exec(readFileSync(new URL('../schema.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0002_credits_referrals.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0003_payout_journal.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0005_notification_diagnostics.sql',import.meta.url),'utf8'));}
- prepare(sql){const db=this.db;let args=[];const p={bind(...v){args=v;return p},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes),last_row_id:Number(r.lastInsertRowid)}}},_exec(){if(/\bRETURNING\b/i.test(sql))return {results:db.prepare(sql).all(...args),meta:{changes:db.prepare('SELECT changes() AS n').get().n}};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}};return p;}
+ prepare(sql){const db=this.db;let args=[];const p={bind(...v){args=v;return p},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes),last_row_id:Number(r.lastInsertRowid)}}},_exec(){if(/\bRETURNING\b|^\s*SELECT\b/i.test(sql))return {results:db.prepare(sql).all(...args),meta:{changes:db.prepare('SELECT changes() AS n').get().n}};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}};return p;}
  async batch(statements){this.db.exec('BEGIN');try{const out=statements.map(s=>s._exec());this.db.exec('COMMIT');return out}catch(e){this.db.exec('ROLLBACK');throw e}}
 }
 const key='FIX-TESTAA-TESTBB-TESTCC-TESTDD';
@@ -74,4 +74,35 @@ test('friend payment credits the destination key once; the license owner cannot 
   assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets WHERE key_id=1').get().balance,1034);
   const k=env.DB.db.prepare('SELECT user_id,x_username FROM access_keys WHERE id=1').get();assert.equal(k.user_id,1);assert.equal(k.x_username,'alice');
  }finally{globalThis.fetch=prior;}
+});
+test('username lookup requires a verified paid bot purchase; never reveals the key or balance',async()=>{
+ const env=setup();const owner=await call(env,'/auth/signup',{email:'username-owner@test.example',password:'test-password'});const friend=await call(env,'/auth/signup',{email:'username-friend@test.example',password:'test-password'});
+ assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
+ env.DB.db.prepare("INSERT INTO orders(id,package,amount,status,created_at,expires_at,user_id,x_username,kind) VALUES (100,'starter',5,'pending',?,?,1,'alice','license')").run(Date.now(),Date.now()+86400000);env.DB.db.exec('UPDATE access_keys SET order_id=100');
+ assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
+ env.DB.db.exec("UPDATE orders SET status='paid' WHERE id=100");
+ const r=await call(env,'/credits/resolve',{xUsername:'@ALICE'},friend.data.token);assert.equal(r.status,200);assert.deepEqual(Object.keys(r.data).sort(),['destinationPolicy','ok','xUsername']);assert.equal(r.data.xUsername,'alice');
+ env.DB.db.exec("UPDATE access_keys SET status='revoked'");assert.equal((await call(env,'/credits/order',{xUsername:'alice',quantity:500},friend.data.token)).status,404);
+ env.DB.db.exec("UPDATE access_keys SET status='sold',expires_at=1");assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
+ assert.equal((await call(env,'/credits/resolve',{xUsername:'https://x.com/alice'},friend.data.token)).status,400);
+});
+test('username gift is pinned to the newest active purchased key, not the payer',async()=>{
+ const env=setup();await call(env,'/auth/signup',{email:'destination-owner@test.example',password:'test-password'});const friend=await call(env,'/auth/signup',{email:'destination-friend@test.example',password:'test-password'});
+ for(const id of [100,101])env.DB.db.prepare("INSERT INTO orders(id,package,amount,status,created_at,expires_at,user_id,x_username,kind) VALUES (?,'starter',5,'paid',?,?,1,'alice','license')").run(id,Date.now(),Date.now()+86400000);
+ env.DB.db.exec('UPDATE access_keys SET order_id=100,sold_at=1000');env.DB.db.prepare("INSERT INTO access_keys(id,key,status,sold_at,expires_at,x_username,user_id,order_id) VALUES (2,'FIX-NEWEST-TESTAA-TESTBB-TESTCC','sold',2000,?,'alice',1,101)").run(Date.now()+86400000);
+ const r=await call(env,'/credits/order',{xUsername:'@ALICE',quantity:734},friend.data.token);assert.equal(r.status,200);const order=env.DB.db.prepare('SELECT * FROM orders WHERE id=?').get(r.data.orderId);assert.equal(order.credit_key_id,2);assert.equal(order.user_id,2);
+ await fulfillOrder(env,order,{id:2,email:'friend@test.example'});await fulfillOrder(env,order,{id:2,email:'friend@test.example'});assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets WHERE key_id=2').get().balance,1034);assert.equal(env.DB.db.prepare('SELECT user_id FROM access_keys WHERE id=2').get().user_id,1);
+ assert.equal((await call(env,'/credits/order',{accessKey:key,xUsername:'alice',quantity:500},friend.data.token)).status,400);
+});
+test('generation reuses existing welcome wallets without repeating grant writes',async()=>{
+ const env=setup();await grantWelcome(env,1);let writes=0;const original=env.DB.batch.bind(env.DB);env.DB.batch=async statements=>{writes++;return original(statements)};
+ await call(env,'/credits/balance',{accessKey:key});assert.equal(writes,0);
+ const r=await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'A real post',stylePrompt:'A concise reply'});assert.equal(r.status,200);assert.equal(writes,2);assert.equal(r.data.balance,299);
+});
+test('gift lookup does not allow username-only AI generation and order expiry cannot exceed key expiry',async()=>{
+ const env=setup();await call(env,'/auth/signup',{email:'cap-owner@test.example',password:'test-password'});const friend=await call(env,'/auth/signup',{email:'cap-friend@test.example',password:'test-password'});
+ env.DB.db.prepare("INSERT INTO orders(id,package,amount,status,created_at,expires_at,user_id,x_username,kind) VALUES (100,'starter',5,'paid',?,?,1,'alice','license')").run(Date.now(),Date.now()+86400000);
+ const expiry=Date.now()+120000;env.DB.db.prepare('UPDATE access_keys SET order_id=100,expires_at=? WHERE id=1').run(expiry);
+ const r=await call(env,'/credits/order',{xUsername:'alice',quantity:500},friend.data.token);assert.equal(r.status,200);assert.equal(r.data.expiresAt,expiry);
+ assert.equal((await call(env,'/credits/generate',{xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'A post'},friend.data.token)).status,401);
 });

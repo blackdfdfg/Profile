@@ -1,3 +1,4 @@
+import {buildReplyMessages} from './reply-request.js';
 import { runApprovedPayouts, payoutStatus } from "./payouts.js";
 /* Credits and referral bookkeeping. All credentials come from Worker Secrets. */
 export function creditQuote(quantity) {
@@ -121,31 +122,48 @@ export async function featureRoute(req,env,ctx,a) {
 
  async function keyAuth(b,usernameRequired=false) {
    await rateLimit(env,'credit-key:' + clientIp(req),600,600000);
-   const k=await env.DB.prepare('SELECT * FROM access_keys WHERE key=?').bind(String(b.accessKey||'').trim().toUpperCase()).first();
+   const k=await env.DB.prepare('SELECT k.*,w.key_id AS wallet_present,w.balance AS wallet_balance,w.free_granted AS wallet_free,w.purchased AS wallet_purchased,w.used AS wallet_used FROM access_keys k LEFT JOIN credit_wallets w ON w.key_id=k.id WHERE k.key=?').bind(String(b.accessKey||'').trim().toUpperCase()).first();
    if (!k || k.status!=='sold') fail(401,'invalid_key','Enter a valid purchased Access Key');
    if (!k.expires_at || k.expires_at<=now()) fail(403,'expired','Your Access Key has expired');
    if (!k.x_username) fail(403,'unbound','Log in to the extension first');
    if (usernameRequired && normX(b.xUsername)!==normX(k.x_username)) fail(403,'bound_other','This key belongs to another X account');
-   await grantWelcome(env,k.id); return k;
+   if(!k.wallet_present)await grantWelcome(env,k.id); return k;
  }
- async function balance(k) {
+ async function balance(k,cached=false) {
+   if(cached&&k.wallet_present)return {ok:true,xUsername:k.x_username,balance:k.wallet_balance,freeGranted:k.wallet_free,purchased:k.wallet_purchased,used:k.wallet_used};
    const w=await env.DB.prepare('SELECT * FROM credit_wallets WHERE key_id=?').bind(k.id).first();
    return {ok:true,xUsername:k.x_username,balance:w.balance,freeGranted:w.free_granted,purchased:w.purchased,used:w.used};
  }
- if(M==='POST' && p==='/credits/balance') {const k=await keyAuth(await body(req));ctx.waitUntil(flushNotifications(env));return json(req,env,await balance(k));}
+ if(M==='POST' && p==='/credits/balance') {const k=await keyAuth(await body(req));ctx.waitUntil(flushNotifications(env));return json(req,env,await balance(k,true));}
+ async function usernameDestination(value) {
+   const username=normX(value);
+   if(!/^[a-z0-9_]{1,15}$/.test(username))fail(400,'bad_username','Enter a valid X username, without a URL');
+   const k=await env.DB.prepare("SELECT k.* FROM access_keys k JOIN orders o ON o.id=k.order_id WHERE lower(k.x_username)=? AND k.status='sold' AND k.expires_at>? AND o.status='paid' AND o.kind='license' AND o.amount>0 AND o.user_id=k.user_id AND lower(o.x_username)=lower(k.x_username) ORDER BY k.sold_at DESC,k.id DESC LIMIT 1").bind(username,now()).first();
+   if(!k)fail(404,'no_active_purchase','No verified bot purchase with an active Access Key was found for this username');
+   return k;
+ }
+ if(M==='POST' && p==='/credits/resolve') {
+   const u=await requireUser(req,env),b=await body(req);
+   await rateLimit(env,'dest-ip:'+clientIp(req),30,600000);await rateLimit(env,'dest-user:'+u.id,30,600000);
+   const k=await usernameDestination(b.xUsername);
+   return json(req,env,{ok:true,xUsername:k.x_username,destinationPolicy:'newest_active_purchased_key'});
+ }
  if(M==='POST' && p==='/credits/order') {
-   const u=await requireUser(req,env),b=await body(req),k=await keyAuth(b);
-   // The signed-in payer may top up a friend's key. Credits always target k.id; license ownership never changes.
+   const u=await requireUser(req,env),b=await body(req);
    await rateLimit(env,'topup:' + u.id,20,3600000);
+   if(b.accessKey&&b.xUsername)fail(400,'ambiguous_destination','Choose Access Key or X username, not both');
+   const k=b.accessKey?await keyAuth(b):b.xUsername?await usernameDestination(b.xUsername):null;
+   if(!k)fail(401,'destination_required','Enter and check an Access Key or purchased X username first');
+   if(!b.accessKey)await grantWelcome(env,k.id);
+   // Credits always target the resolved key ID; license ownership never changes.
    let q;try{q=creditQuote(b.quantity)}catch(e){fail(400,'bad_quantity',e.message)}
    const open=await env.DB.prepare("SELECT * FROM orders WHERE user_id=? AND kind='credits' AND credit_key_id=? AND credit_quantity=? AND status='pending' AND expires_at>? ORDER BY id DESC LIMIT 1").bind(u.id,k.id,q.quantity,now()+300000).first();
    const o=open||await env.DB.prepare("INSERT INTO orders(package,amount,status,created_at,expires_at,ip,user_id,x_username,kind,credit_quantity,credit_key_id) VALUES ('credits',?,'pending',?,?,?,?,?,'credits',?,?) RETURNING *")
-     .bind(q.amount,now(),now()+1800000,clientIp(req),u.id,k.x_username,q.quantity,k.id).first();
+     .bind(q.amount,now(),Math.min(now()+1800000,k.expires_at),clientIp(req),u.id,k.x_username,q.quantity,k.id).first();
    return json(req,env,{orderId:o.id,kind:'credits',quantity:q.quantity,amount:o.amount,unitPrice:q.unitMicros/1000000,currency:'USDT',binanceUid:env.BINANCE_UID,expiresAt:o.expires_at,xUsername:k.x_username});
  }
  if(M==='POST' && p==='/credits/generate') {
-   const b=await body(req),k=await keyAuth(b,true);
-   await rateLimit(env,'ai:' + k.id,180,600000);
+   const started=performance.now(),b=await body(req),k=await keyAuth(b,true),authed=performance.now();
    if(!env.OPENAI_API_KEY || !env.AI_MODEL || !env.AI_ENDPOINT) fail(503,'ai_unavailable','Credit replies are not configured yet. You can still use your own API.');
    const prompt=String(b.stylePrompt||'');
    if([...prompt].length>500) fail(400,'prompt_limit','Reply style must be 500 characters or less');
@@ -153,13 +171,12 @@ export async function featureRoute(req,env,ctx,a) {
    if(!tweet || tweet.length>12000) fail(400,'bad_post','Enter a post of up to 12,000 characters');
    const id=String(b.requestId||'');
    if(!/^[a-zA-Z0-9-]{16,64}$/.test(id)) fail(400,'bad_request','A unique reply request ID is required');
-   let job=await env.DB.prepare('SELECT * FROM credit_jobs WHERE id=?').bind(id).first();
+   const [_,job,refunds]=await Promise.all([rateLimit(env,'ai:' + k.id,180,600000),env.DB.prepare('SELECT * FROM credit_jobs WHERE id=?').bind(id).first(),env.DB.prepare("SELECT COUNT(*) AS n FROM credit_jobs WHERE key_id=? AND status='refunded' AND created_at>?").bind(k.id,now()-86400000).first()]);
    if(job) {
      if(job.key_id!==k.id) fail(409,'request_used','Request ID already used');
      if(['ready','committed'].includes(job.status) && job.response_text) return json(req,env,{...(await balance(k)),text:job.response_text,requestId:id});
      fail(409,'request_pending','This request has already been processed or is in progress');
    }
-   const refunds=await env.DB.prepare("SELECT COUNT(*) AS n FROM credit_jobs WHERE key_id=? AND status='refunded' AND created_at>?").bind(k.id,now()-86400000).first();
    if(refunds.n>=10) fail(429,'refund_limit','Too many failed posts today. Use your own API or contact support.');
    const result=await env.DB.batch([
      env.DB.prepare("INSERT OR IGNORE INTO credit_jobs(id,key_id,status,created_at,updated_at) SELECT ?,?,'generating',?,? FROM credit_wallets WHERE key_id=? AND balance>0").bind(id,k.id,now(),now(),k.id),
@@ -167,15 +184,20 @@ export async function featureRoute(req,env,ctx,a) {
      env.DB.prepare("INSERT INTO credit_ledger(event_id,key_id,delta,reason,created_at) SELECT ?,?,-1,'reply',? WHERE changes()=1").bind('reply:' + id,k.id,now())
    ]);
    if(result[0].meta?.changes!==1) fail(402,'no_credits','No credits left. Top up on fixasif.com/agent/tokens/');
+   const reserved=performance.now();
    try {
      const endpoint=new URL(env.AI_ENDPOINT);
      if(endpoint.protocol!=='https:' || endpoint.hostname!=='api.openai.com') throw new Error('Invalid AI endpoint');
-     const r=await fetch(endpoint.toString(),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer ' + env.OPENAI_API_KEY},signal:AbortSignal.timeout(60000),body:JSON.stringify({model:env.AI_MODEL,max_tokens:220,messages:[{role:'system',content:(prompt.trim()||'Write a short, helpful reply to the post.')+'\nOutput reply text only, no labels or quotes.'},{role:'user',content:tweet+'\nStyle: '+String(b.tone||'').slice(0,100)+'\nKeywords: '+String(b.keywords||'').slice(0,500)}]})});
+     const r=await fetch(endpoint.toString(),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer ' + env.OPENAI_API_KEY},signal:AbortSignal.timeout(60000),body:JSON.stringify({model:env.AI_MODEL,max_tokens:220,messages:buildReplyMessages({...b,tweetText:tweet})})});
      const data=await r.json();const text=String(data.choices?.[0]?.message?.content||'').trim();
      if(!r.ok||!text) throw new Error('No reply returned');
-     const done=await env.DB.prepare("UPDATE credit_jobs SET status='ready',response_text=?,updated_at=? WHERE id=? AND status='generating'").bind(text,now(),id).run();
-     if(done.meta?.changes!==1) fail(409,'request_expired','This reply request expired. Try again.');
-     return json(req,env,{...(await balance(k)),text,requestId:id});
+     const generated=performance.now();
+     const done=await env.DB.batch([env.DB.prepare("UPDATE credit_jobs SET status='ready',response_text=?,updated_at=? WHERE id=? AND status='generating'").bind(text,now(),id),env.DB.prepare('SELECT * FROM credit_wallets WHERE key_id=?').bind(k.id)]);
+     if(done[0].meta?.changes!==1) fail(409,'request_expired','This reply request expired. Try again.');
+     const wallet=done[1].results[0];
+     const response=json(req,env,{ok:true,xUsername:k.x_username,balance:wallet.balance,freeGranted:wallet.free_granted,purchased:wallet.purchased,used:wallet.used,text,requestId:id});
+     response.headers.set('Server-Timing','auth;dur='+Math.round(authed-started)+', reserve;dur='+Math.round(reserved-authed)+', generation;dur='+Math.round(generated-reserved)+', finish;dur='+Math.round(performance.now()-generated));
+     return response;
    }catch(e){await refundJob(env,id,k.id,'ai_failed');if(e.status)throw e;fail(502,'ai_failed','Reply generation failed. Your credit was returned.');}
  }
  if(M==='POST' && p==='/credits/settle') {

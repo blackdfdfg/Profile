@@ -28,3 +28,6 @@ Credit jobs debit a reservation atomically, refund failed generation, cache retr
 and return unused reservations after 30 minutes. Refund abuse limits apply.
 
 Credit topups require a valid purchased Access Key and an authenticated payer account. The payer may be a friend. Fulfillment adds credits to the immutable order credit_key_id; license ownership and its X username never change. Payment verification remains restricted to the account that created the topup order.
+
+Username gift topups require a paid license order, matching bound X username and owner, and an unexpired sold key. The newest qualifying key is selected; credit orders lock its ID. Authenticated lookup returns no key, email or wallet balance.
+Generation uses the same post/style/tone/keyword composition as My API, skips repeated welcome-wallet writes, and reports non-sensitive stage durations via Server-Timing for diagnostics. Network and AI latency remain variable.
