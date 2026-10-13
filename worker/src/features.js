@@ -135,7 +135,7 @@ export async function featureRoute(req,env,ctx,a) {
  if(M==='POST' && p==='/credits/balance') {const k=await keyAuth(await body(req));ctx.waitUntil(flushNotifications(env));return json(req,env,await balance(k));}
  if(M==='POST' && p==='/credits/order') {
    const u=await requireUser(req,env),b=await body(req),k=await keyAuth(b);
-   if(k.user_id!==u.id) fail(403,'not_owned','Use the account that purchased this key');
+   // The signed-in payer may top up a friend's key. Credits always target k.id; license ownership never changes.
    await rateLimit(env,'topup:' + u.id,20,3600000);
    let q;try{q=creditQuote(b.quantity)}catch(e){fail(400,'bad_quantity',e.message)}
    const open=await env.DB.prepare("SELECT * FROM orders WHERE user_id=? AND kind='credits' AND credit_key_id=? AND credit_quantity=? AND status='pending' AND expires_at>? ORDER BY id DESC LIMIT 1").bind(u.id,k.id,q.quantity,now()+300000).first();

@@ -19,6 +19,8 @@
     });
     document.querySelectorAll("[data-gpanel]").forEach(function (p) { p.hidden = p.dataset.gpanel !== tab; });
   }
+  var requested = new URL(location.href).searchParams.get("guide");
+  if (["login","settings","scroll","link","memory","tips"].indexOf(requested) !== -1) show(requested);
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-gtab]");
     if (b) { show(b.dataset.gtab); return; }

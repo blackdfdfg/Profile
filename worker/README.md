@@ -26,3 +26,5 @@ Secrets and generated licence values must never be committed.
 Telegram purchases and rewards use a durable outbox. Owner must Start the bot before it can message their private chat.
 Credit jobs debit a reservation atomically, refund failed generation, cache retries, commit posted replies,
 and return unused reservations after 30 minutes. Refund abuse limits apply.
+
+Credit topups require a valid purchased Access Key and an authenticated payer account. The payer may be a friend. Fulfillment adds credits to the immutable order credit_key_id; license ownership and its X username never change. Payment verification remains restricted to the account that created the topup order.
