@@ -20,7 +20,7 @@ Read-only `admin_*` views expose registrations, licence purchases, credit balanc
 Secrets: OPENAI_API_KEY, AI_MODEL, AI_ENDPOINT, TELEGRAM_BOT_TOKEN,
 TELEGRAM_CHAT_ID, TELEGRAM_WEBHOOK_SECRET, BEP20_PRIVATE_KEY.
 Payout configuration additionally requires BEP20_RPC_URL, BEP20_TOKEN_ADDRESS and explicit PAYOUT_ENABLED=true.
-Payouts are disabled during asset/network setup. No callback is allowed to mark a payment paid before chain confirmation.
+Payouts require explicit enablement after mainnet and token verification. An owner confirmation only approves a reward; insufficient USDT or BNB leaves it queued. No callback marks a payment paid before three on-chain confirmations. `/admin/payout-status` is read-only and requires the private OWNER_ADMIN_SECRET header; it never signs or sends a transaction.
 Secrets and generated licence values must never be committed.
 
 Telegram purchases and rewards use a durable outbox. Owner must Start the bot before it can message their private chat.

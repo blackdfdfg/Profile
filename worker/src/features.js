@@ -1,4 +1,4 @@
-import { runApprovedPayouts } from "./payouts.js";
+import { runApprovedPayouts, payoutStatus } from "./payouts.js";
 /* Credits and referral bookkeeping. All credentials come from Worker Secrets. */
 export function creditQuote(quantity) {
   const n = Number(quantity);
@@ -105,6 +105,11 @@ async function refundJob(env,id,keyId,reason) {
 export async function featureRoute(req,env,ctx,a) {
  const url = new URL(req.url), p = url.pathname.replace(/\/+$/,'') || '/', M=req.method;
  const { json,body,fail,requireUser,rateLimit,normX,now,clientIp }=a;
+ if(M==='GET' && p==='/admin/payout-status') {
+   await rateLimit(env,'payout-status:'+clientIp(req),10,600000);
+   if(!env.OWNER_ADMIN_SECRET || req.headers.get('X-Owner-Secret')!==env.OWNER_ADMIN_SECRET)fail(403,'forbidden','Owner access only');
+   try{return json(req,env,await payoutStatus(env));}catch{fail(503,'wallet_unavailable','Wallet diagnostics unavailable');}
+ }
  if(M==='GET' && p==='/telegram/bot') {
    await rateLimit(env,'bot-info:'+clientIp(req),10,600000);
    if(!env.TELEGRAM_BOT_TOKEN)fail(503,'not_configured','Telegram is not configured');
@@ -186,8 +191,10 @@ export async function featureRoute(req,env,ctx,a) {
    const u=await requireUser(req,env),b=await body(req);await rateLimit(env,'ref-create:'+u.id,5,3600000);
    const existing=await env.DB.prepare('SELECT * FROM referral_profiles WHERE user_id=?').bind(u.id).first();
    if(existing) return json(req,env,{code:existing.code,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+existing.code,walletAddress:existing.wallet_address});
-   const address=String(b.walletAddress||'').trim();
+   let address=String(b.walletAddress||'').trim();
    if(!/^0x[a-fA-F0-9]{40}$/.test(address)||/^0x0{40}$/i.test(address)) fail(400,'bad_wallet','Enter a valid BEP20 wallet address');
+   const {getAddress}=await import('ethers');
+   try{address=getAddress(address);}catch{fail(400,'bad_wallet','Check your wallet address and checksum');}
    const code=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
    await env.DB.prepare('INSERT INTO referral_profiles(user_id,code,wallet_address,created_at) VALUES (?,?,?,?)').bind(u.id,code,address,now()).run();
    return json(req,env,{code,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+code,walletAddress:address});
@@ -196,7 +203,8 @@ export async function featureRoute(req,env,ctx,a) {
    const u=await requireUser(req,env),profile=await env.DB.prepare('SELECT * FROM referral_profiles WHERE user_id=?').bind(u.id).first();
    const rows=await env.DB.prepare('SELECT r.id,r.status,r.created_at,r.success_at,p.status AS payment_status,p.tx_hash,p.amount_micros FROM referrals r LEFT JOIN referral_payouts p ON p.referral_id=r.id WHERE r.referrer_id=? ORDER BY r.id DESC LIMIT 200').bind(u.id).all();
    const stats=await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,SUM(CASE WHEN status='successful' THEN 1 ELSE 0 END) AS successful FROM referrals WHERE referrer_id=?").bind(u.id).first();
-   return json(req,env,{profile:profile?{code:profile.code,walletAddress:profile.wallet_address,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+profile.code}:null,referrals:rows.results||[],stats,payoutsEnabled:env.PAYOUT_ENABLED==='true'});
+   const payoutSummary=await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='paid' THEN amount_micros ELSE 0 END),0) AS paidMicros,COALESCE(SUM(CASE WHEN status IN ('awaiting_confirmation','approved','approved_pending_wallet','broadcast_pending','submitted') THEN amount_micros ELSE 0 END),0) AS pendingMicros FROM referral_payouts WHERE user_id=?").bind(u.id).first();
+   return json(req,env,{profile:profile?{code:profile.code,walletAddress:profile.wallet_address,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+profile.code}:null,referrals:rows.results||[],stats,payoutSummary,payoutsEnabled:env.PAYOUT_ENABLED==='true'});
  }
  if(M==='POST' && p==='/telegram/webhook') {
    const supplied=req.headers.get('X-Telegram-Bot-Api-Secret-Token')||'';

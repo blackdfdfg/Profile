@@ -45,7 +45,8 @@ export async function runApprovedPayouts(env,queueNotification) {
     const payout=await env.DB.prepare("SELECT * FROM referral_payouts WHERE status IN ('approved','approved_pending_wallet') ORDER BY approved_at LIMIT 1").first();
     if(!payout)return;
     if(payout.amount_micros!==1000000)throw new Error('Unsupported reward amount');
-    const recipient=getAddress(payout.wallet_address),contractAddress=getAddress(env.BEP20_TOKEN_ADDRESS);
+    let recipient;try{recipient=getAddress(payout.wallet_address);}catch{await env.DB.prepare("UPDATE referral_payouts SET status='review',error='Invalid receiving wallet. Owner review required.' WHERE id=?").bind(payout.id).run();return;}
+    const contractAddress=getAddress(env.BEP20_TOKEN_ADDRESS);
     if(recipient.toLowerCase()===wallet.address.toLowerCase()){
       await env.DB.prepare("UPDATE referral_payouts SET status='review',error='Payout wallet cannot be its own recipient' WHERE id=?").bind(payout.id).run();return;
     }
@@ -79,4 +80,18 @@ export async function runApprovedPayouts(env,queueNotification) {
     // Never log errors from an RPC or signer; they may contain credential details.
     await queueNotification(env,'payout-configuration:'+Math.floor(Date.now()/3600000),'⚠️ Referral payout paused. Check wallet, chain, token and gas configuration. No new transfer was marked paid.');
   }finally{await env.DB.prepare('UPDATE payout_locks SET expires_at=0 WHERE id=1 AND owner=?').bind(owner).run();}
+}
+
+// Read-only owner diagnostics. Never signs or broadcasts a transaction.
+export async function payoutStatus(env) {
+  const {JsonRpcProvider,Wallet,Contract,formatUnits,getAddress}=await import('ethers');
+  const rpc=new URL(env.BEP20_RPC_URL);if(rpc.protocol!=='https:')throw new Error('Invalid RPC');
+  const provider=new JsonRpcProvider(rpc.toString(),undefined,{batchMaxCount:1});
+  const network=await provider.getNetwork();if(network.chainId!==56n)throw new Error('Wrong chain');
+  const address=new Wallet(env.BEP20_PRIVATE_KEY).address;
+  const tokenAddress=getAddress(env.BEP20_TOKEN_ADDRESS);
+  const token=new Contract(tokenAddress,['function decimals() view returns(uint8)','function symbol() view returns(string)','function balanceOf(address) view returns(uint256)'],provider);
+  const [decimals,symbol,bnb,usdt,code]=await Promise.all([token.decimals(),token.symbol(),provider.getBalance(address),token.balanceOf(address),provider.getCode(tokenAddress)]);
+  if(symbol!=='USDT'||Number(decimals)!==18||code==='0x')throw new Error('Invalid token');
+  return {enabled:env.PAYOUT_ENABLED==='true',chainId:56,address,tokenAddress,symbol,decimals:Number(decimals),bnb:formatUnits(bnb,18),usdt:formatUnits(usdt,18),needsUSDT:usdt<10n**18n};
 }

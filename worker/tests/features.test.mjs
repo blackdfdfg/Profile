@@ -45,3 +45,16 @@ test('topup rejects a different transferred amount',async()=>{
  globalThis.fetch=async(input,opts)=>String(input).includes('/sapi/v1/pay/transactions')?Response.json({code:'000000',data:[{transactionId:'amount1234',currency:'USDT',amount:'0.2',transactionTime:Date.now()}]}):prior(input,opts);
  try{const result=await call(env,'/verify',{orderId:order.data.orderId,binanceOrderId:'amount1234',turnstileToken:'mock'},user.data.token);assert.equal(result.status,400);assert.equal(result.data.error,'amount_mismatch');assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets').get().balance,300);}finally{globalThis.fetch=prior;}
 });
+test('referral dashboard separates paid and queued rewards, excluding cancelled rewards',async()=>{
+ const env=setup();const user=await call(env,'/auth/signup',{email:'ref-owner@test.example',password:'test-password'});
+ for(const [i,status] of [[11,'paid'],[12,'awaiting_confirmation'],[13,'cancelled']])env.DB.db.prepare('INSERT INTO referral_payouts(id,referral_id,user_id,wallet_address,status,created_at) VALUES (?,?,?,?,?,?)').run(String(i),i,1,'0x'+'1'.repeat(40),status,Date.now());
+ const r=await call(env,'/referrals/dashboard',null,user.data.token);assert.equal(r.status,200);assert.equal(r.data.payoutSummary.paidMicros,1000000);assert.equal(r.data.payoutSummary.pendingMicros,1000000);
+});
+test('wallet diagnostics never expose balances without owner authorization',async()=>{
+ const env=setup();env.OWNER_ADMIN_SECRET='owner-test-only';const r=await call(env,'/admin/payout-status');assert.equal(r.status,403);assert.ok(!('address' in r.data));
+});
+test('referral address validation rejects invalid checksum and locks the first receiving address',async()=>{
+ const env=setup();const user=await call(env,'/auth/signup',{email:'wallet@test.example',password:'test-password'});
+ const bad=await call(env,'/referrals/create',{walletAddress:'0xFd15B779576ff6460dc81CAf0462028607bd0493'},user.data.token);assert.equal(bad.status,400);
+ const good=await call(env,'/referrals/create',{walletAddress:'0x'+'1'.repeat(40)},user.data.token);assert.equal(good.status,200);const again=await call(env,'/referrals/create',{walletAddress:'0x'+'2'.repeat(40)},user.data.token);assert.equal(again.data.walletAddress,good.data.walletAddress);assert.ok(!good.data.url.includes('0x'));
+});
