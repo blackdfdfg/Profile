@@ -173,13 +173,15 @@ export async function featureRoute(req,env,ctx,a) {
    if(!tweet || tweet.length>12000) fail(400,'bad_post','Enter a post of up to 12,000 characters');
    const id=String(b.requestId||'');
    if(!/^[a-zA-Z0-9-]{16,64}$/.test(id)) fail(400,'bad_request','A unique reply request ID is required');
-   const [_,job,refunds]=await Promise.all([rateLimit(env,'ai:' + k.id,180,600000),env.DB.prepare('SELECT * FROM credit_jobs WHERE id=?').bind(id).first(),env.DB.prepare("SELECT COUNT(*) AS n FROM credit_jobs WHERE key_id=? AND status='refunded' AND created_at>?").bind(k.id,now()-86400000).first()]);
+   const [_,job,refunds]=await Promise.all([rateLimit(env,'ai:' + k.id,180,600000),env.DB.prepare('SELECT * FROM credit_jobs WHERE id=?').bind(id).first(),env.DB.prepare("SELECT COUNT(*) AS n FROM credit_jobs j JOIN credit_ledger l ON l.event_id='refund:'||j.id WHERE j.key_id=? AND j.status='refunded' AND l.reason='post_failed' AND j.created_at>?").bind(k.id,now()-86400000).first()]);
    if(job) {
      if(job.key_id!==k.id) fail(409,'request_used','Request ID already used');
      if(['ready','committed'].includes(job.status) && job.response_text) return json(req,env,{...(await balance(k)),text:job.response_text,requestId:id});
      fail(409,'request_pending','This request has already been processed or is in progress');
    }
-   if(refunds.n>=10) fail(429,'refund_limit','Too many failed posts today. Use your own API or contact support.');
+   // Provider failures and interrupted requests are not customer misuse.
+   // Purchased wallets must remain usable; the rolling generation rate limit still applies.
+   if(!(k.wallet_purchased>0) && refunds.n>=10) fail(429,'refund_limit','Free-credit failed-post limit reached. Contact support or top up to continue.');
    const result=await env.DB.batch([
      env.DB.prepare("INSERT OR IGNORE INTO credit_jobs(id,key_id,status,created_at,updated_at) SELECT ?,?,'generating',?,? FROM credit_wallets WHERE key_id=? AND balance>0").bind(id,k.id,now(),now(),k.id),
      env.DB.prepare('UPDATE credit_wallets SET balance=balance-1,used=used+1 WHERE key_id=? AND balance>0 AND changes()=1').bind(k.id),
@@ -207,7 +209,10 @@ export async function featureRoute(req,env,ctx,a) {
    const job=await env.DB.prepare('SELECT * FROM credit_jobs WHERE id=? AND key_id=?').bind(id,k.id).first();
    if(!job) fail(404,'not_found','Reply request not found');
    if(b.posted===true) await env.DB.prepare("UPDATE credit_jobs SET status='committed',updated_at=? WHERE id=? AND status='ready'").bind(now(),id).run();
-   else if(b.posted===false) {await rateLimit(env,'refund:' + k.id,10,86400000);await refundJob(env,id,k.id,'post_failed');}
+   else if(b.posted===false) {
+     // Replayed settlements are no-ops and must never exhaust a refund allowance.
+     if(['generating','ready'].includes(job.status)){await rateLimit(env,'refund:' + k.id,180,600000);await refundJob(env,id,k.id,'post_failed');}
+   }
    else fail(400,'bad_request','Specify whether the comment was posted');
    return json(req,env,await balance(k));
  }

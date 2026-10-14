@@ -116,3 +116,16 @@ test('bulk topup orders use authoritative 20k and 50k rates, not a client price'
  }
  const config=await call(env,'/config');assert.deepEqual(config.data.creditRates.slice(-2),[{min:20000,max:49999,unitPrice:.00015},{min:50000,unitPrice:.00014}]);
 });
+
+test('paid wallet remains usable after fourteen refunds and refunds stay idempotent',async()=>{
+ const env=setup();await grantWelcome(env,1);env.DB.db.exec('UPDATE credit_wallets SET balance=20300,purchased=20000');
+ for(let i=0;i<14;i++){const b={accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Real post '+i};assert.equal((await call(env,'/credits/generate',b)).status,200);assert.equal((await call(env,'/credits/settle',{...b,posted:false})).status,200);for(let n=0;n<3;n++)assert.equal((await call(env,'/credits/settle',{...b,posted:false})).status,200);}
+ const r=await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Next real post'});assert.equal(r.status,200);assert.equal(r.data.balance,20299);
+});
+test('provider and interrupted refunds do not lock a free-credit wallet',async()=>{
+ const env=setup();await grantWelcome(env,1);for(let i=0;i<14;i++){const id=crypto.randomUUID();env.DB.db.prepare("INSERT INTO credit_jobs(id,key_id,status,created_at,updated_at) VALUES (?,1,'refunded',?,?)").run(id,Date.now(),Date.now());env.DB.db.prepare("INSERT INTO credit_ledger(event_id,key_id,delta,reason,created_at) VALUES (?,1,1,?,?)").run('refund:'+id,i%2?'ai_failed':'interrupted',Date.now());}
+ assert.equal((await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Post'})).status,200);
+});
+test('free-credit abuse guard remains after ten actual failed posts',async()=>{
+ const env=setup();for(let i=0;i<10;i++){const b={accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Post'};assert.equal((await call(env,'/credits/generate',b)).status,200);await call(env,'/credits/settle',{...b,posted:false});}const r=await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Post'});assert.equal(r.status,429);assert.equal(r.data.error,'refund_limit');assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets').get().balance,300);
+});
