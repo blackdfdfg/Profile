@@ -5,7 +5,7 @@ export function creditQuote(quantity) {
   const n = Number(quantity);
   if (!Number.isSafeInteger(n) || n < 500) throw new Error('Buy at least 500 whole credits');
   // Inclusive thresholds; one fixed rate applies to the entire order.
-  const unitMicros = n >= 5000 ? 160 : n >= 1000 ? 180 : 200;
+  const unitMicros = n >= 50000 ? 140 : n >= 20000 ? 150 : n >= 5000 ? 160 : n >= 1000 ? 180 : 200;
   if(!Number.isSafeInteger(n * unitMicros))throw new Error('This quantity is too large for an exact payment calculation');
   return { quantity: n, unitMicros, amountMicros: n * unitMicros, amount: n * unitMicros / 1000000 };
 }

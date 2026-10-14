@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="theme.css?v=checkout2">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
@@ -85,7 +85,7 @@
         <div class="hero-mini">
           <a href="#guide"><i class="fa-solid fa-book-open"></i> New here? <b>See the picture guide</b></a>
         </div>
-        <p class="latest-release">Latest update: <b>v1.8</b> · October 13, 2026 · <a href="updates/">See what changed →</a><br><small>Store release: v1.6. New controls require the latest update after approval.</small></p>
+        <p class="latest-release">Latest extension build: <b>v1.9</b> · Comments required, Likes optional · <a href="updates/">See what changed →</a><br><small>Store release: v1.6. New controls require the latest update after approval.</small></p>
         <div class="hero-stats">
           <div><b data-count="keysSold">-</b><span>Keys sold</span></div>
           <div><b data-count="activeKeys">-</b><span>Active agents</span></div>
@@ -93,15 +93,10 @@
           <div><b>24/7</b><span>Telegram help</span></div>
         </div>
       </div>
-      <div class="hero2-shot reveal">
-        <div class="browser">
-          <div class="browser-bar"><i></i><i></i><i></i><span class="url"><i class="fa-solid fa-lock"></i> x.com/home</span><span class="ext-pin"><img src="assets/logo.png" alt=""></span></div>
-          <img src="assets/guide/scene.webp" alt="Fix X Agent Auto-Scroll panel running on X" width="1600" height="1475" loading="eager">
-        </div>
-        <div class="float-chip c1"><i class="fa-solid fa-robot"></i> AI reply posted</div>
-        <div class="float-chip c2"><i class="fa-solid fa-heart"></i> +1 like</div>
-        <div class="float-chip c3"><i class="fa-solid fa-shield-halved"></i> Random human gaps</div>
-      </div>
+      <figure class="hero2-shot reveal processor-visual">
+        <img src="assets/memory-chip.webp" alt="Conceptual processor illustration representing Fix software Memory" width="1024" height="1024" fetchpriority="high">
+        <figcaption><span>MEMORY, BUILT INTO THE WORKFLOW</span><strong>Remember attempts.<br>Keep the next run focused.</strong><small>24-hour browser-local history · Software feature illustration</small></figcaption>
+      </figure>
     </section>
 
     <section class="trust container reveal">
@@ -235,9 +230,9 @@
       </div>
 
       <!-- LINK ENGAGE -->
-      <div class="gpanel" data-gpanel="link" hidden><figure class="gshot"><img src="assets/updates/link-panel.webp" alt="Link Engage queue with Find Links, Reset, View Links, Like and Comment switches" width="360" height="590" loading="lazy"></figure><div class="gside"><h3 class="gtitle">Link Engage, step by step</h3><p class="gintro">Turn on Link Engage in the extension popup and open x.com. Check Profile Reload before running a queue.</p><ul class="guide-points"><li><b>Paste and Find Links:</b> extracts post links, removes repeated status IDs, your own username and recent attempts saved in Memory.</li><li><b>Like / Comment:</b> choose either or both. Both cannot be off. Like-only uses no reply credits.</li><li><b>Start / Stop:</b> Find Links only builds the queue. Start begins; Stop pauses the run.</li><li><b>Reset:</b> clears the queue and progress, not saved Memory. View Links returns the list to the text box.</li><li><b>Gear beside Reload:</b> opens Memory, current source and balance. Delay Between and Pause After stay on the main panel.</li><li><b>Delay:</b> 0 and 1 second are accepted. One of four values is chosen each time. Set all four to 1 for a 1-second configured wait; loading, AI generation and posting still take additional time.</li><li><b>Home / Back:</b> optional navigation happens after groups of 3, 4, 5, 6 or 9 processed links, not after every comment. This does not guarantee account safety.</li></ul><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Where is Memory? →</a></div></div>
+      <div class="gpanel" data-gpanel="link" hidden><figure class="gshot"><img src="assets/updates/link-panel-v1.9.webp" alt="Link Engage queue with Find Links, Reset, View Links, optional Like switch and required comments" width="360" height="590" loading="lazy"></figure><div class="gside"><h3 class="gtitle">Link Engage, step by step</h3><p class="gintro">Turn on Link Engage in the extension popup and open x.com. Check Profile Reload before running a queue.</p><ul class="guide-points"><li><b>Paste and Find Links:</b> extracts post links, removes repeated status IDs, your own username and recent attempts saved in Memory.</li><li><b>Comments + optional Like:</b> Link Engage comments are required in v1.9. Turn Like on to also like posts; turning it off does not stop comments.</li><li><b>Start / Stop:</b> Find Links only builds the queue. Start begins; Stop pauses the run.</li><li><b>Reset:</b> clears the queue and progress, not saved Memory. View Links returns the list to the text box.</li><li><b>Gear beside Reload:</b> opens Memory, current source and balance. Delay Between and Pause After stay on the main panel.</li><li><b>Delay:</b> 0 and 1 second are accepted. One of four values is chosen each time. Set all four to 1 for a 1-second configured wait; loading, AI generation and posting still take additional time.</li><li><b>Home / Back:</b> optional navigation happens after groups of 3, 4, 5, 6 or 9 processed links, not after every comment. This does not guarantee account safety.</li></ul><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Where is Memory? →</a></div></div>
 
-      <div class="gpanel" data-gpanel="memory" hidden><figure class="gshot"><img src="assets/guide/memory-explained.webp" alt="Numbered Memory guide: gear, saved count, on/off switch, Reset memory, reply source and balance" width="440" height="710" loading="lazy"><figcaption>Open the gear immediately to the right of Profile Reload.</figcaption></figure><div class="gside"><h3 class="gtitle">Memory remembers attempts for 24 hours</h3><p class="gintro">Memory is local history, not your current queue. Completed and failed attempts are recorded separately for each X username.</p><ol class="legend"><li><b>Gear:</b> next to Reload. Open it to find all Memory settings. Back returns to the queue.</li><li><b>Saved count:</b> the number of unexpired link IDs stored for this X account.</li><li><b>Memory on/off:</b> on filters and saves attempts; off stops both. Turning off does not erase older records.</li><li><b>Reset memory:</b> clears this account’s saved attempts after confirmation. Ordinary queue Reset does not.</li><li><b>Reply source:</b> shows Fix Credits or My API, with its billing rule.</li><li><b>Credit balance:</b> shows available credits and Reload balance. My API does not use this balance.</li></ol><div class="gnote"><b>100 → 95 → 85:</b> 100 pasted links minus 2 duplicates and 3 of your own links leaves 95. After 10 completed or failed attempts, Stop → View Links → Find Links leaves 85 when Memory is on.</div><p>Find Links removes expired records after 24 hours. Duplicate detection uses the post/status ID, even when the URL’s username or query differs. To retry a failed attempt sooner, switch Memory off or reset it deliberately.</p><p><b>How it works</b> at the bottom of gear settings opens the English offline guide.</p><a class="btn btn-ghost" href="assets/updates/Fix-v1.8-Memory-Link-Engage-Guide.pdf" target="_blank" rel="noopener">Open English PDF guide →</a></div></div>
+      <div class="gpanel" data-gpanel="memory" hidden><figure class="gshot"><img src="assets/guide/memory-explained.webp" alt="Numbered Memory guide: gear, saved count, on/off switch, Reset memory, reply source and balance" width="440" height="710" loading="lazy"><figcaption>Open the gear immediately to the right of Profile Reload.</figcaption></figure><div class="gside"><h3 class="gtitle">Memory remembers attempts for 24 hours</h3><p class="gintro">Memory is local history, not your current queue. Completed and failed attempts are recorded separately for each X username.</p><ol class="legend"><li><b>Gear:</b> next to Reload. Open it to find all Memory settings. Back returns to the queue.</li><li><b>Saved count:</b> the number of unexpired link IDs stored for this X account.</li><li><b>Memory on/off:</b> on filters and saves attempts; off stops both. Turning off does not erase older records.</li><li><b>Reset memory:</b> clears this account’s saved attempts after confirmation. Ordinary queue Reset does not.</li><li><b>Reply source:</b> shows Fix Credits or My API, with its billing rule.</li><li><b>Credit balance:</b> shows available credits and Reload balance. My API does not use this balance.</li></ol><div class="gnote"><b>100 → 95 → 85:</b> 100 pasted links minus 2 duplicates and 3 of your own links leaves 95. After 10 completed or failed attempts, Stop → View Links → Find Links leaves 85 when Memory is on.</div><p>Find Links removes expired records after 24 hours. Duplicate detection uses the post/status ID, even when the URL’s username or query differs. To retry a failed attempt sooner, switch Memory off or reset it deliberately.</p><p><b>How it works</b> at the bottom of gear settings opens the English offline guide.</p><a class="btn btn-ghost" href="assets/updates/Fix-v1.9-Memory-Link-Engage-Guide.pdf" target="_blank" rel="noopener">Open English PDF guide →</a></div></div>
 
       <!-- TIPS -->
       <div class="gpanel" data-gpanel="tips" hidden>
@@ -441,10 +436,10 @@
     <div class="modal-backdrop" data-close></div>
     <div class="modal-box card pay-box">
       <button class="modal-x" data-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
-      <div class="stepper"><span class="s1 active">1</span><i></i><span class="s2">2</span><i></i><span class="s3"><i class="fa-solid fa-key"></i></span></div>
+      <div class="checkout-kicker">SECURE ACCESS KEY CHECKOUT</div><div class="stepper" aria-label="Checkout progress"><span class="s1 active"><b>1</b> Who</span><i></i><span class="s2"><b>2</b> Pay</span><i></i><span class="s3"><b>3</b> Check</span><i></i><span class="s4"><b>4</b> Ready</span></div>
 
       <div class="pay-step" data-step="1">
-        <h2 id="payTitle">Make payment</h2>
+        <h2 id="payTitle">Choose the X account</h2>
         <p class="muted">Plan: <b id="payPlan">-</b></p>
 
         <form id="xUserForm" class="form xuser-box" novalidate>
@@ -456,6 +451,9 @@
           <p class="form-msg" role="status"></p>
         </form>
 
+        </div>
+      <div class="pay-step" data-step="2" hidden>
+        <h2>Make your payment</h2><p class="muted">Binance Pay · USDT · Exact amount only</p>
         <div id="payDetails" hidden>
           <div class="for-user">Key for <b class="mono" id="payXUser">@-</b> <button type="button" class="link-btn" id="changeXUser">change</button></div>
           <div class="amount-box">
@@ -467,20 +465,22 @@
             <div><span class="label">Binance ID (UID)</span><b class="mono" id="payUid">-</b></div>
             <button class="btn btn-ghost btn-sm" type="button" data-copy-target="payUid"><i class="fa-regular fa-copy"></i> Copy</button>
           </div>
+          <figure class="payment-qr"><img src="assets/fixasif-pay-qr.png" alt="FixAsif Binance Pay QR supplied by the merchant" width="624" height="624"><figcaption>Scan with Binance → confirm recipient <b>FixAsif</b><br><a href="assets/fixasif-pay-qr.png" download="FixAsif-Binance-Pay-QR.png">Save QR to use on this phone</a></figcaption></figure>
+          <p class="payment-warning">This QR identifies the recipient. Enter the exact order amount yourself. Use <b>Binance Pay</b>, not an on-chain withdrawal.</p>
           <ol class="howto">
             <li>Open <b>Binance</b> → <b>Pay</b> → <b>Send</b>.</li>
             <li>Choose <b>Binance ID</b> and paste the ID above.</li>
             <li>Select <b>USDT</b> and send <b>exactly <span class="amt-inline">0</span> USDT</b>.</li>
             <li>Open the payment in <b>Pay → History</b> and copy its <b>Order ID</b>.</li>
           </ol>
-          <button class="btn btn-primary btn-block" type="button" id="confirmPayBtn"><i class="fa-solid fa-check"></i> Confirm payment</button>
+          <button class="btn btn-primary btn-block" type="button" id="confirmPayBtn"><i class="fa-solid fa-check"></i> I have paid · Continue</button>
         </div>
         <div class="pay-loading" hidden><span class="spinner"></span> Creating your order…</div>
       </div>
 
-      <div class="pay-step" data-step="2" hidden>
+      <div class="pay-step" data-step="3" hidden>
         <h2>Verify payment</h2>
-        <p class="muted">Paste the <b>Order ID</b> of your Binance payment.</p>
+        <p class="muted">Only a verified payment issues your Access Key. Pressing “I have paid” does not confirm payment.</p><div class="verify-summary"><div><small>Amount</small><strong><span class="amt-inline">0</span> USDT</strong></div><div><small>Recipient</small><strong>FixAsif</strong></div></div><div class="order-id-help"><b>Where is my Order ID?</b><p>Binance → Pay → History → open the successful USDT payment → copy <strong>Order ID</strong>. Do not paste the website order number or an on-chain TxID.</p></div>
         <form id="verifyForm" class="form" novalidate>
           <label>Binance Order ID
             <span class="pw-wrap"><input name="binanceOrderId" inputmode="numeric" autocomplete="off" placeholder="e.g. 312345678901234567" required><button type="button" class="pw-eye" id="pasteBtn" aria-label="Paste"><i class="fa-regular fa-clipboard"></i></button></span>
@@ -493,7 +493,7 @@
         </form>
       </div>
 
-      <div class="pay-step" data-step="3" hidden>
+      <div class="pay-step" data-step="4" hidden>
         <div class="success-icon"><i class="fa-solid fa-check"></i></div>
         <h2>Payment verified!</h2>
         <p class="muted" id="successMsg">Your receipt is below. It is also saved in your account.</p>
@@ -511,7 +511,7 @@
   <div id="printArea" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="referrals.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=checkout2"></script>
   <script src="guide.js"></script>
 </body>
 </html>

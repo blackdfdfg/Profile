@@ -228,7 +228,7 @@ async function route(req, env, ctx) {
       googleRedirectUri: env.GOOGLE_REDIRECT_URI,
       extensionUrl: extUrl(env),
       supportUrl: SUPPORT_URL,
-      creditRates: [{ min: 500, max: 999, unitPrice: 0.0002 }, { min: 1000, max: 4999, unitPrice: 0.00018 }, { min: 5000, unitPrice: 0.00016 }],
+      creditRates: [{ min: 500, max: 999, unitPrice: 0.0002 }, { min: 1000, max: 4999, unitPrice: 0.00018 }, { min: 5000, max: 19999, unitPrice: 0.00016 }, { min: 20000, max: 49999, unitPrice: 0.00015 }, { min: 50000, unitPrice: 0.00014 }],
       orderMinutes: ORDER_TTL_MS / 60000
     });
   }

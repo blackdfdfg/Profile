@@ -178,7 +178,7 @@ async function submitXUser(e) {
     $("#payAmount").textContent = d.amount;
     $$(".amt-inline").forEach((el) => (el.textContent = d.amount));
     $("#payUid").textContent = d.binanceUid || CFG.binanceUid || "-";
-    f.hidden = true; $("#payDetails").hidden = false;
+    f.hidden = true; $("#payDetails").hidden = false; showStep(2);
     startTimer(d.expiresAt);
   } catch (err) {
     if (err.status === 401) { closeModal("payModal"); pendingPlan = order.plan.id; openAuth("login"); }
@@ -198,7 +198,7 @@ function startTimer(exp) {
   tick(); timerId = setInterval(tick, 1000);
 }
 function stopTimer() { clearInterval(timerId); timerId = 0; }
-function goVerify() { showStep(2); renderTurnstile(); setTimeout(() => $("#verifyForm").binanceOrderId.focus(), 60); }
+function goVerify() { showStep(3); renderTurnstile(); setTimeout(() => $("#verifyForm").binanceOrderId.focus(), 60); }
 function renderTurnstile() {
   const box = $("#turnstileBox");
   if (!CFG.turnstileSiteKey) return;
@@ -287,7 +287,7 @@ function showSuccess(d) {
   $("#successMsg").textContent = d.pending ? nd(d.message) : "Your key is ready. The receipt is also saved in your account.";
   $("#successReceipt").innerHTML = receiptHTML(lastReceipt);
   setExtLinks(d.extensionUrl);
-  showStep(3); confetti();
+  showStep(4); confetti();
   KEYS = []; // refresh dashboard next time
 }
 
@@ -421,9 +421,9 @@ document.addEventListener("click", (e) => {
   else if (t.id === "userMenuBtn") { const dd = $("#userDropdown"); dd.classList.toggle("open"); t.setAttribute("aria-expanded", dd.classList.contains("open")); }
   else if (t.id === "navToggle") $("#navLinks").classList.toggle("open");
   else if (t.closest("#navLinks") && t.tagName === "A") $("#navLinks").classList.remove("open");
-  else if (t.id === "changeXUser") { stopTimer(); $("#payDetails").hidden = true; $("#xUserForm").hidden = false; $("#xUserForm").xUsername.focus(); }
+  else if (t.id === "changeXUser") { stopTimer(); showStep(1); $("#payDetails").hidden = true; $("#xUserForm").hidden = false; $("#xUserForm").xUsername.focus(); }
   else if (t.id === "confirmPayBtn") goVerify();
-  else if (t.id === "backStep1") showStep(1);
+  else if (t.id === "backStep1") showStep(2);
   else if (t.id === "pasteBtn") navigator.clipboard && navigator.clipboard.readText().then((v) => { $("#verifyForm").binanceOrderId.value = v.replace(/\D/g, ""); }).catch(() => toast("Paste manually (long-press → Paste)"));
   else if (t.id === "dlReceipt") downloadReceipt(lastReceipt);
   else if (t.id === "printReceipt") printReceipt(lastReceipt);
