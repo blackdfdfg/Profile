@@ -146,7 +146,9 @@ export async function featureRoute(req,env,ctx,a) {
    const u=await requireUser(req,env),b=await body(req);
    await rateLimit(env,'dest-ip:'+clientIp(req),30,600000);await rateLimit(env,'dest-user:'+u.id,30,600000);
    const k=await usernameDestination(b.xUsername);
-   return json(req,env,{ok:true,xUsername:k.x_username,destinationPolicy:'newest_active_purchased_key'});
+   if(!(await env.DB.prepare('SELECT key_id FROM credit_wallets WHERE key_id=?').bind(k.id).first()))await grantWelcome(env,k.id);
+   const wallet=await balance(k);
+   return json(req,env,{ok:true,xUsername:k.x_username,balance:wallet.balance,destinationPolicy:'newest_active_purchased_key'});
  }
  if(M==='POST' && p==='/credits/order') {
    const u=await requireUser(req,env),b=await body(req);

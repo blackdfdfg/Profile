@@ -75,13 +75,13 @@ test('friend payment credits the destination key once; the license owner cannot 
   const k=env.DB.db.prepare('SELECT user_id,x_username FROM access_keys WHERE id=1').get();assert.equal(k.user_id,1);assert.equal(k.x_username,'alice');
  }finally{globalThis.fetch=prior;}
 });
-test('username lookup requires a verified paid bot purchase; never reveals the key or balance',async()=>{
+test('username lookup requires a paid bot purchase, shows its credit balance but never the key or email',async()=>{
  const env=setup();const owner=await call(env,'/auth/signup',{email:'username-owner@test.example',password:'test-password'});const friend=await call(env,'/auth/signup',{email:'username-friend@test.example',password:'test-password'});
  assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
  env.DB.db.prepare("INSERT INTO orders(id,package,amount,status,created_at,expires_at,user_id,x_username,kind) VALUES (100,'starter',5,'pending',?,?,1,'alice','license')").run(Date.now(),Date.now()+86400000);env.DB.db.exec('UPDATE access_keys SET order_id=100');
  assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
  env.DB.db.exec("UPDATE orders SET status='paid' WHERE id=100");
- const r=await call(env,'/credits/resolve',{xUsername:'@ALICE'},friend.data.token);assert.equal(r.status,200);assert.deepEqual(Object.keys(r.data).sort(),['destinationPolicy','ok','xUsername']);assert.equal(r.data.xUsername,'alice');
+ assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'})).status,401);const r=await call(env,'/credits/resolve',{xUsername:'@ALICE'},friend.data.token);assert.equal(r.status,200);assert.deepEqual(Object.keys(r.data).sort(),['balance','destinationPolicy','ok','xUsername']);assert.equal(r.data.xUsername,'alice');assert.equal(r.data.balance,300);env.DB.db.exec('UPDATE credit_wallets SET balance=125 WHERE key_id=1');assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).data.balance,125);
  env.DB.db.exec("UPDATE access_keys SET status='revoked'");assert.equal((await call(env,'/credits/order',{xUsername:'alice',quantity:500},friend.data.token)).status,404);
  env.DB.db.exec("UPDATE access_keys SET status='sold',expires_at=1");assert.equal((await call(env,'/credits/resolve',{xUsername:'alice'},friend.data.token)).status,404);
  assert.equal((await call(env,'/credits/resolve',{xUsername:'https://x.com/alice'},friend.data.token)).status,400);
@@ -90,6 +90,7 @@ test('username gift is pinned to the newest active purchased key, not the payer'
  const env=setup();await call(env,'/auth/signup',{email:'destination-owner@test.example',password:'test-password'});const friend=await call(env,'/auth/signup',{email:'destination-friend@test.example',password:'test-password'});
  for(const id of [100,101])env.DB.db.prepare("INSERT INTO orders(id,package,amount,status,created_at,expires_at,user_id,x_username,kind) VALUES (?,'starter',5,'paid',?,?,1,'alice','license')").run(id,Date.now(),Date.now()+86400000);
  env.DB.db.exec('UPDATE access_keys SET order_id=100,sold_at=1000');env.DB.db.prepare("INSERT INTO access_keys(id,key,status,sold_at,expires_at,x_username,user_id,order_id) VALUES (2,'FIX-NEWEST-TESTAA-TESTBB-TESTCC','sold',2000,?,'alice',1,101)").run(Date.now()+86400000);
+ await grantWelcome(env,1);env.DB.db.exec('UPDATE credit_wallets SET balance=7 WHERE key_id=1');const lookup=await call(env,'/credits/resolve',{xUsername:'@ALICE'},friend.data.token);assert.equal(lookup.data.balance,300);assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets WHERE key_id=1').get().balance,7);
  const r=await call(env,'/credits/order',{xUsername:'@ALICE',quantity:734},friend.data.token);assert.equal(r.status,200);const order=env.DB.db.prepare('SELECT * FROM orders WHERE id=?').get(r.data.orderId);assert.equal(order.credit_key_id,2);assert.equal(order.user_id,2);
  await fulfillOrder(env,order,{id:2,email:'friend@test.example'});await fulfillOrder(env,order,{id:2,email:'friend@test.example'});assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets WHERE key_id=2').get().balance,1034);assert.equal(env.DB.db.prepare('SELECT user_id FROM access_keys WHERE id=2').get().user_id,1);
  assert.equal((await call(env,'/credits/order',{accessKey:key,xUsername:'alice',quantity:500},friend.data.token)).status,400);
