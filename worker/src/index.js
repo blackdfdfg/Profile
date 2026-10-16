@@ -1,4 +1,5 @@
 import { featureRoute, grantWelcome, attachReferral, fulfillOrder, flushNotifications, cleanupFeatures } from "./features.js";
+import { WEBSITE_ACTIONS, validateHuman } from "./human.js";
 /* FixAsif Agent - Cloudflare Worker (D1 binding: DB)
    Secrets: BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET,
             GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, JWT_SECRET
@@ -109,23 +110,10 @@ const publicUser = (u) => ({ id: u.id, email: u.email, name: u.name || "", googl
 /* ---------------- rate limit (D1, fixed window) ---------------- */
 async function rateLimit(env, key, limit, windowMs) {
   const t=now();
-  const row=await env.DB.prepare("INSERT INTO rate_limits(k,count,window_start) VALUES (?,1,?) ON CONFLICT(k) DO UPDATE SET count=CASE WHEN ?-window_start>? THEN 1 ELSE count+1 END,window_start=CASE WHEN ?-window_start>? THEN ? ELSE window_start END RETURNING count")
-    .bind(key,t,t,windowMs,t,windowMs,t).first();
-  if(row.count>limit)fail(429,"rate_limited","Too many attempts. Please wait and try again.");
-}
-
-/* ---------------- Turnstile ---------------- */
-async function checkTurnstile(env, token, ip) {
-  if (!token) return false;
-  const fd = new FormData();
-  fd.append("secret", env.TURNSTILE_SECRET);
-  fd.append("response", token);
-  fd.append("remoteip", ip);
-  try {
-    const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: fd });
-    const d = await r.json();
-    return d.success === true;
-  } catch (e) { return false; }
+  const row=await env.DB.prepare("INSERT INTO rate_limits(k,count,window_start) VALUES (?,1,?) ON CONFLICT(k) DO UPDATE SET count=CASE WHEN ?-window_start>? THEN 1 ELSE count+1 END,window_start=CASE WHEN ?-window_start>? THEN ? ELSE window_start END WHERE rate_limits.count<? OR ?-rate_limits.window_start>? RETURNING count")
+    .bind(key,t,t,windowMs,t,windowMs,t,limit,t,windowMs).first();
+  // Denied retries do not keep rewriting an already-exhausted counter.
+  if(!row || row.count>limit)fail(429,"rate_limited","Too many attempts. Please wait and try again.");
 }
 
 /* ---------------- Binance Pay history ---------------- */
@@ -213,6 +201,16 @@ async function route(req, env, ctx) {
   const p = url.pathname.replace(/\/+$/, "") || "/";
   const M = req.method;
   const ip = clientIp(req);
+
+  // Reject unverified website mutations BEFORE authentication reads, rate-limit
+  // writes, payment lookups or referral work. Never trust Origin as verification.
+  if (M === "POST" && WEBSITE_ACTIONS[p]) {
+    if (!env.TURNSTILE_SECRET) fail(503, "human_unavailable", "Human verification is unavailable. Please try again later.");
+    const b = await body(req.clone());
+    if (!(await validateHuman(env, b.turnstileToken, ip, p === "/verify" ? "" : WEBSITE_ACTIONS[p]))) {
+      fail(403, "human_failed", "Please complete human verification and try again.");
+    }
+  }
 
   const featureResponse = await featureRoute(req, env, ctx, { json, body, fail, requireUser, rateLimit, normX, now, clientIp, timingSafeEq });
   if (featureResponse) return featureResponse;
@@ -331,7 +329,6 @@ async function route(req, env, ctx) {
     const b = await body(req);
     const binanceOrderId = String(b.binanceOrderId || "").replace(/\s+/g, "");
     if (!/^[A-Za-z0-9_-]{6,64}$/.test(binanceOrderId)) fail(400, "bad_order_id", "Enter the Order ID from your Binance payment details");
-    if (!(await checkTurnstile(env, b.turnstileToken, ip))) fail(403, "human_failed", "Human verification failed");
 
     const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?").bind(Number(b.orderId), u.id).first();
     if (!order) fail(404, "order_not_found", "Order not found - please start again");
@@ -502,7 +499,7 @@ export default {
       return json(req, env, { ok: false, error: "server_error", message: "Something went wrong - please try again" }, 500);
     }
   },
-  // daily cleanup: expire stale pending orders, drop old rate-limit rows
+  // Five-minute maintenance: expire stale pending orders, drop old rate-limit rows.
   async scheduled(event, env) {
     await cleanupFeatures(env);
     await env.DB.prepare("UPDATE orders SET status = 'expired' WHERE status = 'pending' AND expires_at < ?").bind(now() - VERIFY_GRACE_MS).run();

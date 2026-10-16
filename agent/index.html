@@ -15,7 +15,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="theme.css?v=checkout2">
+  <link rel="stylesheet" href="theme.css?v=security1">
+  <link rel="stylesheet" href="human.css?v=1">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
@@ -64,11 +65,12 @@
     </div>
   </header>
 
+  <nav class="account-shortcuts user-only" aria-label="Your account"><a href="#/dashboard">My keys</a><a href="#/dashboard/referrals">Referrals · earn $1</a><a href="tokens/">Credits</a><a href="#/dashboard/settings">Account</a></nav>
   <main id="viewLanding">
     <!-- HERO -->
     <section class="hero2 container">
       <div class="hero2-copy reveal">
-        <span class="pill"><span class="dot"></span> v1.6 · Works on PC + Phone (Android)</span>
+        <span class="pill"><span class="dot"></span> Works on PC + Android</span>
         <h1>Your X account,<br><span class="grad">on smart autopilot.</span></h1>
         <p class="lead">Fix X Agent is a Chrome extension that writes helpful AI replies, likes and comments while it scrolls, and works through a whole list of post links for you, with human-like timing.</p>
         <div class="hero-cta">
@@ -85,20 +87,21 @@
         <div class="hero-mini">
           <a href="#guide"><i class="fa-solid fa-book-open"></i> New here? <b>See the picture guide</b></a>
         </div>
-        <p class="latest-release">Latest extension build: <b>v1.9</b> · Comments required, Likes optional · <a href="updates/">See what changed →</a><br><small>Store release: v1.6. New controls require the latest update after approval.</small></p>
+        <p class="latest-release">Next extension build: <b>v1.9.2</b> · Compact controls, faster duplicate checks · <a href="updates/">See what changed →</a><br><small>Extension changes require v1.9.2 after approval and installation.</small></p>
         <div class="hero-stats">
           <div><b data-count="keysSold">-</b><span>Keys sold</span></div>
           <div><b data-count="activeKeys">-</b><span>Active agents</span></div>
-          <div><b>3</b><span>AI providers</span></div>
+          <div><b>11</b><span>AI connections in v1.9.2</span></div>
           <div><b>24/7</b><span>Telegram help</span></div>
         </div>
       </div>
       <figure class="hero2-shot reveal processor-visual">
-        <img src="assets/memory-chip.webp" alt="Conceptual processor illustration representing Fix software Memory" width="1024" height="1024" fetchpriority="high">
+        <img src="assets/memory-chip-v192.webp" alt="Conceptual processor illustration representing Fix software Memory" width="1024" height="1024" fetchpriority="high">
         <figcaption><span>MEMORY, BUILT INTO THE WORKFLOW</span><strong>Remember attempts.<br>Keep the next run focused.</strong><small>24-hour browser-local history · Software feature illustration</small></figcaption>
       </figure>
     </section>
 
+    <section class="referral-invite container reveal"><div><span class="eyebrow">GOOD TO SHARE</span><h2>Invite a friend.<br>Earn $1 in USDT.</h2><p>Their first eligible bot purchase unlocks your reward. Create your link now; add a wallet only when you claim.</p><a class="btn btn-primary" href="#/dashboard/referrals">Get your referral link →</a></div><p class="referral-steps"><b>01</b> Share your link<br><b>02</b> Your friend makes a first purchase<br><b>03</b> Claim · review · receive USDT</p></section>
     <section class="trust container reveal">
       <div><i class="fa-brands fa-chrome"></i> Official Chrome Web Store</div>
       <div><i class="fa-brands fa-android"></i> Works on PC + Android phone</div>
@@ -230,9 +233,9 @@
       </div>
 
       <!-- LINK ENGAGE -->
-      <div class="gpanel" data-gpanel="link" hidden><figure class="gshot"><img src="assets/updates/link-panel-v1.9.webp" alt="Link Engage queue with Find Links, Reset, View Links, optional Like switch and required comments" width="360" height="590" loading="lazy"></figure><div class="gside"><h3 class="gtitle">Link Engage, step by step</h3><p class="gintro">Turn on Link Engage in the extension popup and open x.com. Check Profile Reload before running a queue.</p><ul class="guide-points"><li><b>Paste and Find Links:</b> extracts post links, removes repeated status IDs, your own username and recent attempts saved in Memory.</li><li><b>Comments + optional Like:</b> Link Engage comments are required in v1.9. Turn Like on to also like posts; turning it off does not stop comments.</li><li><b>Start / Stop:</b> Find Links only builds the queue. Start begins; Stop pauses the run.</li><li><b>Reset:</b> clears the queue and progress, not saved Memory. View Links returns the list to the text box.</li><li><b>Gear beside Reload:</b> opens Memory, current source and balance. Delay Between and Pause After stay on the main panel.</li><li><b>Delay:</b> 0 and 1 second are accepted. One of four values is chosen each time. Set all four to 1 for a 1-second configured wait; loading, AI generation and posting still take additional time.</li><li><b>Home / Back:</b> optional navigation happens after groups of 3, 4, 5, 6 or 9 processed links, not after every comment. This does not guarantee account safety.</li></ul><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Where is Memory? →</a></div></div>
+      <div class="gpanel" data-gpanel="link" hidden><figure class="gshot"><img src="assets/updates/link-panel-v1.9.webp" alt="Link Engage queue with Find Links, Reset, View Links, optional Like switch and required comments" width="360" height="590" loading="lazy"></figure><div class="gside"><h3 class="gtitle">Link Engage, step by step</h3><p class="gintro">Turn on Link Engage in the extension popup and open x.com. Check Profile Reload before running a queue.</p><ul class="guide-points"><li><b>Paste and Find Links:</b> extracts post links, removes repeated status IDs, your own username and recent attempts saved in Memory.</li><li><b>Comments + optional Like:</b> Link Engage comments are required in v1.9. Turn Like on to also like posts; turning it off does not stop comments.</li><li><b>Start / Stop:</b> Find Links only builds the queue. Start begins; Stop pauses the run.</li><li><b>Reset:</b> clears the queue, progress and Failed Export archive, not saved Memory. Find Links preserves Failed Export; each failed link has an Open button. View Links returns the queue to the text box.</li><li><b>Gear beside Reload:</b> opens Memory, current source and balance. Delay Between and Pause After stay on the main panel.</li><li><b>Delay:</b> 0 and 1 second are accepted. One of four values is chosen each time. Set all four to 1 for a 1-second configured wait; loading, AI generation and posting still take additional time.</li><li><b>Home / Back:</b> optional navigation happens after groups of 3, 4, 5, 6 or 9 processed links, not after every comment. This does not guarantee account safety.</li></ul><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Where is Memory? →</a></div></div>
 
-      <div class="gpanel" data-gpanel="memory" hidden><figure class="gshot"><img src="assets/guide/memory-explained.webp" alt="Numbered Memory guide: gear, saved count, on/off switch, Reset memory, reply source and balance" width="440" height="710" loading="lazy"><figcaption>Open the gear immediately to the right of Profile Reload.</figcaption></figure><div class="gside"><h3 class="gtitle">Memory remembers attempts for 24 hours</h3><p class="gintro">Memory is local history, not your current queue. Completed and failed attempts are recorded separately for each X username.</p><ol class="legend"><li><b>Gear:</b> next to Reload. Open it to find all Memory settings. Back returns to the queue.</li><li><b>Saved count:</b> the number of unexpired link IDs stored for this X account.</li><li><b>Memory on/off:</b> on filters and saves attempts; off stops both. Turning off does not erase older records.</li><li><b>Reset memory:</b> clears this account’s saved attempts after confirmation. Ordinary queue Reset does not.</li><li><b>Reply source:</b> shows Fix Credits or My API, with its billing rule.</li><li><b>Credit balance:</b> shows available credits and Reload balance. My API does not use this balance.</li></ol><div class="gnote"><b>100 → 95 → 85:</b> 100 pasted links minus 2 duplicates and 3 of your own links leaves 95. After 10 completed or failed attempts, Stop → View Links → Find Links leaves 85 when Memory is on.</div><p>Find Links removes expired records after 24 hours. Duplicate detection uses the post/status ID, even when the URL’s username or query differs. To retry a failed attempt sooner, switch Memory off or reset it deliberately.</p><p><b>How it works</b> at the bottom of gear settings opens the English offline guide.</p><a class="btn btn-ghost" href="assets/updates/Fix-v1.9-Memory-Link-Engage-Guide.pdf" target="_blank" rel="noopener">Open English PDF guide →</a></div></div>
+      <div class="gpanel" data-gpanel="memory" hidden><figure class="gshot"><img src="assets/guide/memory-explained.webp" alt="Numbered Memory guide: gear, saved count, on/off switch, Reset memory, reply source and balance" width="440" height="710" loading="lazy"><figcaption>Open the gear immediately to the right of Profile Reload.</figcaption></figure><div class="gside"><h3 class="gtitle">Memory remembers attempts for 24 hours</h3><p class="gintro">Memory is local history, not your current queue. Completed and failed attempts are recorded separately for each X username.</p><ol class="legend"><li><b>Gear:</b> next to Reload. Open it to find all Memory settings. Back returns to the queue.</li><li><b>Saved count:</b> the number of unexpired link IDs stored for this X account.</li><li><b>Memory on/off:</b> on filters and saves attempts; off stops both. Turning off does not erase older records.</li><li><b>Reset memory:</b> clears this account’s saved attempts after confirmation. Ordinary queue Reset does not.</li><li><b>Reply source:</b> shows Fix Credits or My API, with its billing rule.</li><li><b>Credit balance:</b> shows available credits and Reload balance. My API does not use this balance.</li></ol><div class="gnote"><b>100 → 95 → 85:</b> 100 pasted links minus 2 duplicates and 3 of your own links leaves 95. After 10 completed or failed attempts, Stop → View Links → Find Links leaves 85 when Memory is on.</div><p>Find Links removes expired records after 24 hours. Duplicate detection uses the post/status ID, even when the URL’s username or query differs. To retry a failed attempt sooner, stop the queue and reset Memory deliberately. If submission was unconfirmed, inspect the post manually: its separate 24-hour automatic-retry guard remains, even after Memory Reset.</p><p><b>How it works</b> at the bottom of gear settings opens the English offline guide.</p><a class="btn btn-ghost" href="assets/updates/Fix-v1.9.2-Memory-Link-Engage-Guide.pdf" target="_blank" rel="noopener">Open English PDF guide →</a></div></div>
 
       <!-- TIPS -->
       <div class="gpanel" data-gpanel="tips" hidden>
@@ -510,8 +513,9 @@
 
   <div id="printArea" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="referrals.js"></script>
-  <script src="app.js?v=checkout2"></script>
+  <script src="human.js?v=1"></script>
+  <script src="referrals.js?v=security1"></script>
+  <script src="app.js?v=security1"></script>
   <script src="guide.js"></script>
 </body>
 </html>

@@ -3,17 +3,18 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import worker from '../src/index.js';
-import {creditQuote,grantWelcome,fulfillOrder,attachReferral} from '../src/features.js';
+import {WEBSITE_ACTIONS,validateHuman} from '../src/human.js';
+import {creditQuote,grantWelcome,fulfillOrder,attachReferral,cleanupFeatures} from '../src/features.js';
 class D1 {
  constructor(){this.db=new DatabaseSync(':memory:');this.db.exec(readFileSync(new URL('../schema.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0002_credits_referrals.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0003_payout_journal.sql',import.meta.url),'utf8'));this.db.exec(readFileSync(new URL('../migrations/0005_notification_diagnostics.sql',import.meta.url),'utf8'));}
  prepare(sql){const db=this.db;let args=[];const p={bind(...v){args=v;return p},async first(){return db.prepare(sql).get(...args)||null},async all(){return {results:db.prepare(sql).all(...args)}},async run(){const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes),last_row_id:Number(r.lastInsertRowid)}}},_exec(){if(/\bRETURNING\b|^\s*SELECT\b/i.test(sql))return {results:db.prepare(sql).all(...args),meta:{changes:db.prepare('SELECT changes() AS n').get().n}};const r=db.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}};return p;}
  async batch(statements){this.db.exec('BEGIN');try{const out=statements.map(s=>s._exec());this.db.exec('COMMIT');return out}catch(e){this.db.exec('ROLLBACK');throw e}}
 }
 const key='FIX-TESTAA-TESTBB-TESTCC-TESTDD';
-function setup(){const env={DB:new D1(),JWT_SECRET:'test-only-secret',SITE_ORIGIN:'https://fixasif.com',OPENAI_API_KEY:'test-only',AI_MODEL:'test-model',AI_ENDPOINT:'https://api.openai.com/v1/chat/completions',TELEGRAM_CHAT_ID:'123',TELEGRAM_WEBHOOK_SECRET:'test-hook'};env.DB.db.prepare("INSERT INTO access_keys(id,key,status,expires_at,x_username,user_id) VALUES (1,?,'sold',?,'alice',1)").run(key,Date.now()+86400000);return env;}
-async function call(env,path,data,token){const req=new Request('https://worker.test'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),'CF-Connecting-IP':'10.1.1.1'},body:data?JSON.stringify(data):undefined});const pending=[];const res=await worker.fetch(req,env,{waitUntil:p=>pending.push(p)});await Promise.all(pending);return {status:res.status,data:await res.json()};}
+function setup(){const env={DB:new D1(),JWT_SECRET:'test-only-secret',TURNSTILE_SECRET:'test-turnstile-secret',SITE_ORIGIN:'https://fixasif.com',OPENAI_API_KEY:'test-only',AI_MODEL:'test-model',AI_ENDPOINT:'https://api.openai.com/v1/chat/completions',TELEGRAM_CHAT_ID:'123',TELEGRAM_WEBHOOK_SECRET:'test-hook'};env.DB.db.prepare("INSERT INTO access_keys(id,key,status,expires_at,x_username,user_id) VALUES (1,?,'sold',?,'alice',1)").run(key,Date.now()+86400000);return env;}
+async function call(env,path,data,token){if(data&&WEBSITE_ACTIONS[path])data={...data,turnstileToken:data.turnstileToken||'action:'+WEBSITE_ACTIONS[path]};const req=new Request('https://worker.test'+path,{method:data?'POST':'GET',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),'CF-Connecting-IP':'10.1.1.1'},body:data?JSON.stringify(data):undefined});const pending=[];const res=await worker.fetch(req,env,{waitUntil:p=>pending.push(p)});await Promise.all(pending);return {status:res.status,data:await res.json()};}
 const realFetch=globalThis.fetch;
-globalThis.fetch=async(input,opts)=>{const u=String(input);if(u.includes('api.openai.com'))return Response.json({choices:[{message:{content:'A useful reply'}}]});if(u.includes('api.telegram.org'))return Response.json({ok:true});if(u.includes('turnstile'))return Response.json({success:true});return realFetch(input,opts)};
+globalThis.fetch=async(input,opts)=>{const u=String(input);if(u.includes('api.openai.com'))return Response.json({choices:[{message:{content:'A useful reply'}}]});if(u.includes('api.telegram.org'))return Response.json({ok:true});if(u.includes('turnstile')){return Response.json({success:true,hostname:'fixasif.com',action:opts.body.get('response').startsWith('action:')?opts.body.get('response').slice(7):undefined});}return realFetch(input,opts)};
 test('all boundaries use integer micro-dollar calculations',()=>{for(const [n,rate,total] of [[500,200,.1],[999,200,.1998],[1000,180,.18],[4999,180,.89982],[5000,160,.8],[5001,160,.80016],[19999,160,3.19984],[20000,150,3],[49999,150,7.49985],[50000,140,7],[50001,140,7.00014]]){assert.equal(creditQuote(n).unitMicros,rate);assert.equal(creditQuote(n).amount,total)}for(const n of [0,499,500.5,NaN,Number.MAX_SAFE_INTEGER])assert.throws(()=>creditQuote(n));});
 test('welcome credits are issued once, including repeated key verification',async()=>{const env=setup();await grantWelcome(env,1);await grantWelcome(env,1);let r=await call(env,'/credits/balance',{accessKey:key});assert.equal(r.data.balance,300);assert.equal(env.DB.db.prepare('SELECT COUNT(*) AS n FROM credit_ledger').get().n,1);});
 test('topup fulfillment is atomic and idempotent',async()=>{const env=setup();await grantWelcome(env,1);const order={id:10,kind:'credits',credit_key_id:1,credit_quantity:734,amount:.1468,x_username:'alice'};await fulfillOrder(env,order,{email:'a@test.example'});await fulfillOrder(env,order,{email:'a@test.example'});const wallet=env.DB.db.prepare('SELECT * FROM credit_wallets').get();assert.equal(wallet.balance,1034);assert.equal(wallet.purchased,734);assert.equal(env.DB.db.prepare('SELECT COUNT(*) AS n FROM notification_outbox').get().n,1);});
@@ -53,10 +54,19 @@ test('referral dashboard separates paid and queued rewards, excluding cancelled 
 test('wallet diagnostics never expose balances without owner authorization',async()=>{
  const env=setup();env.OWNER_ADMIN_SECRET='owner-test-only';const r=await call(env,'/admin/payout-status');assert.equal(r.status,403);assert.ok(!('address' in r.data));
 });
-test('referral address validation rejects invalid checksum and locks the first receiving address',async()=>{
- const env=setup();const user=await call(env,'/auth/signup',{email:'wallet@test.example',password:'test-password'});
- const bad=await call(env,'/referrals/create',{walletAddress:'0xFd15B779576ff6460dc81CAf0462028607bd0493'},user.data.token);assert.equal(bad.status,400);
- const good=await call(env,'/referrals/create',{walletAddress:'0x'+'1'.repeat(40)},user.data.token);assert.equal(good.status,200);const again=await call(env,'/referrals/create',{walletAddress:'0x'+'2'.repeat(40)},user.data.token);assert.equal(again.data.walletAddress,good.data.walletAddress);assert.ok(!good.data.url.includes('0x'));
+test('referral links need no address; reward claim validates and locks each receiving address',async()=>{
+ const env=setup(),user=await call(env,'/auth/signup',{email:'claim-owner@test.example',password:'test-password'});
+ let r=await call(env,'/referrals/create',{},user.data.token);assert.equal(r.status,200);assert.ok(r.data.url);assert.equal(env.DB.db.prepare('SELECT wallet_address FROM referral_profiles').get().wallet_address,'');
+ env.DB.db.prepare("INSERT INTO referrals(id,referrer_id,referred_id,status,created_at) VALUES (100,1,2,'successful',?)").run(Date.now());
+ env.DB.db.prepare("INSERT INTO referral_payouts(id,referral_id,user_id,wallet_address,status,created_at) VALUES ('claim-test',100,1,'','claimable',?)").run(Date.now());
+ const base={referralId:100,confirmed:true};assert.equal((await call(env,'/referrals/claim',{...base,walletAddress:'0x'+'0'.repeat(40)},user.data.token)).status,400);
+ assert.equal((await call(env,'/referrals/claim',{...base,walletAddress:'0xFd15B779576ff6460dc81CAf0462028607bd0493'},user.data.token)).status,400);
+ assert.equal((await call(env,'/referrals/claim',{...base,confirmed:false,walletAddress:'0x'+'1'.repeat(40)},user.data.token)).status,400);
+ r=await call(env,'/referrals/claim',{...base,walletAddress:'0x'+'1'.repeat(40)},user.data.token);assert.equal(r.status,200);assert.equal(r.data.status,'awaiting_confirmation');
+ assert.equal((await call(env,'/referrals/claim',{...base,walletAddress:'0x'+'1'.repeat(40)},user.data.token)).status,200);
+ assert.equal((await call(env,'/referrals/claim',{...base,walletAddress:'0x'+'2'.repeat(40)},user.data.token)).status,409);
+ assert.equal(env.DB.db.prepare("SELECT COUNT(*) AS n FROM notification_outbox WHERE event_id='claim:claim-test'").get().n,1);
+ const other=await call(env,'/auth/signup',{email:'not-owner@test.example',password:'test-password'});assert.equal((await call(env,'/referrals/claim',{...base,walletAddress:'0x'+'1'.repeat(40)},other.data.token)).status,404);
 });
 
 test('friend payment credits the destination key once; the license owner cannot verify the friend order',async()=>{
@@ -128,4 +138,65 @@ test('provider and interrupted refunds do not lock a free-credit wallet',async()
 });
 test('free-credit abuse guard remains after ten actual failed posts',async()=>{
  const env=setup();for(let i=0;i<10;i++){const b={accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Post'};assert.equal((await call(env,'/credits/generate',b)).status,200);await call(env,'/credits/settle',{...b,posted:false});}const r=await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'Post'});assert.equal(r.status,429);assert.equal(r.data.error,'refund_limit');assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets').get().balance,300);
+});
+
+test('new referral rewards wait for claim before any owner approval or signing',async()=>{const env=setup();env.DB.db.prepare("INSERT INTO referral_profiles(user_id,code,wallet_address,created_at) VALUES (2,'ABCDEF1234567890','',?)").run(Date.now());await attachReferral(env,{id:1},'ABCDEF1234567890','127.0.0.1');await fulfillOrder(env,{id:1,kind:'license',amount:5,x_username:'alice'},{id:1,email:'buyer@example.test'},[{key}]);const payout=env.DB.db.prepare('SELECT * FROM referral_payouts').get();assert.equal(payout.status,'claimable');assert.equal(payout.wallet_address,'');const note=env.DB.db.prepare("SELECT * FROM notification_outbox WHERE event_id LIKE 'referral:%'").get();assert.equal(note.buttons,null);});
+
+test('repeated cleanup only writes old response text once and preserves recent text',async()=>{
+ const env=setup(),t=Date.now(),old=t-2*86400000;
+ for(const [id,text,at] of [['old-cleared',null,old],['old-text','Old response',old],['recent-text','Keep this reply',t]])env.DB.db.prepare("INSERT INTO credit_jobs(id,key_id,status,response_text,created_at,updated_at) VALUES (?,1,'committed',?,?,?)").run(id,text,at,at);
+ const prepare=env.DB.prepare.bind(env.DB);let writes=0;
+ env.DB.prepare=sql=>{const stmt=prepare(sql);if(sql.startsWith('UPDATE credit_jobs SET response_text=NULL')){const run=stmt.run;stmt.run=async()=>{const r=await run();writes+=r.meta.changes;return r;};}return stmt;};
+ await cleanupFeatures(env);assert.equal(writes,1);
+ await cleanupFeatures(env);assert.equal(writes,1,'Second cleanup must not rewrite NULL rows');
+ assert.equal(env.DB.db.prepare("SELECT response_text FROM credit_jobs WHERE id='recent-text'").get().response_text,'Keep this reply');
+ assert.equal(env.DB.db.prepare("SELECT response_text FROM credit_jobs WHERE id='old-text'").get().response_text,null);
+ assert.equal(env.DB.db.prepare('SELECT COUNT(*) AS n FROM credit_jobs').get().n,3,'Preserve all job IDs for idempotency');
+});
+
+test('every sensitive website route rejects missing verification before any D1 access',async()=>{
+ const env=setup();let queries=0;env.DB.prepare=()=>{queries++;throw Error('Unverified request reached D1')};
+ for(const path of Object.keys(WEBSITE_ACTIONS)){
+  const r=await worker.fetch(new Request('https://worker.test'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}),env,{waitUntil(){}});
+  assert.equal(r.status,403,path);assert.equal((await r.json()).error,'human_failed',path);
+ }
+ assert.equal(queries,0);
+});
+test('human verification fails closed without a configured secret',async()=>{
+ const env=setup();delete env.TURNSTILE_SECRET;
+ assert.equal((await call(env,'/auth/signup',{email:'blocked@test.example',password:'test-password'})).status,503);
+ assert.equal(env.DB.db.prepare('SELECT COUNT(*) AS n FROM users').get().n,0);
+});
+test('human verification checks hostname and action, rejects failure, oversized tokens and network errors',async()=>{
+ const env=setup(),prior=globalThis.fetch;let requests=0;
+ try{
+  const answer=data=>{globalThis.fetch=async()=>{requests++;return Response.json(data)}};
+  answer({success:true,hostname:'fixasif.com',action:'signup'});assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),true);
+  answer({success:true,hostname:'www.fixasif.com',action:'signup'});assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),true);
+  answer({success:true,hostname:'attacker.example',action:'signup'});assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),false);
+  answer({success:true,hostname:'fixasif.com',action:'login'});assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),false);
+  answer({success:false,hostname:'fixasif.com',action:'signup'});assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),false);
+  const before=requests;assert.equal(await validateHuman(env,'x'.repeat(2049),'127.0.0.1','signup'),false);assert.equal(requests,before);
+  globalThis.fetch=async()=>{throw Error('offline')};assert.equal(await validateHuman(env,'token','127.0.0.1','signup'),false);
+ }finally{globalThis.fetch=prior}
+});
+test('a replayed human token cannot create another account',async()=>{
+ const env=setup(),prior=globalThis.fetch;let used=false;
+ globalThis.fetch=async(input,options)=>{
+  if(String(input).includes('turnstile')){const success=!used;used=true;return Response.json({success,hostname:'fixasif.com',action:'signup'})}
+  return prior(input,options);
+ };
+ try{
+  assert.equal((await call(env,'/auth/signup',{email:'first@test.example',password:'test-password',turnstileToken:'one-use'})).status,200);
+  assert.equal((await call(env,'/auth/signup',{email:'second@test.example',password:'test-password',turnstileToken:'one-use'})).status,403);
+  assert.equal(env.DB.db.prepare('SELECT COUNT(*) AS n FROM users').get().n,1);
+ }finally{globalThis.fetch=prior}
+});
+test('denied repeated requests stop rewriting an exhausted D1 rate-limit counter',async()=>{
+ const env=setup();let denied=0;
+ for(let i=0;i<25;i++){const r=await call(env,'/telegram/bot');if(r.status===429)denied++}
+ assert.equal(denied,15);
+ assert.equal(env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='bot-info:10.1.1.1'").get().count,10);
+ env.DB.db.prepare("UPDATE rate_limits SET window_start=? WHERE k='bot-info:10.1.1.1'").run(Date.now()-600001);
+ await call(env,'/telegram/bot');assert.equal(env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='bot-info:10.1.1.1'").get().count,1);
 });

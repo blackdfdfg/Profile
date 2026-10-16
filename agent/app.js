@@ -23,6 +23,10 @@ let USER = null, pendingPlan = null, order = null, timerId = 0, tsWidget = null,
 
 /* ---------- api ---------- */
 async function api(path, opts = {}) {
+  if (opts.body && window.FixHuman?.required(path)) {
+    const turnstileToken = await window.FixHuman.verify(path, CFG.turnstileSiteKey);
+    opts = { ...opts, body: { ...opts.body, turnstileToken } };
+  }
   const h = { "Content-Type": "application/json" };
   const t = localStorage.getItem(TK);
   if (t) h.Authorization = "Bearer " + t;
@@ -364,6 +368,7 @@ async function submitPassword(e) {
 /* ---------- router ---------- */
 function showView(v) { $("#viewLanding").hidden = v !== "landing"; $("#viewDashboard").hidden = v !== "dashboard"; }
 function route() {
+  closeDropdown();
   const h = location.hash;
   if (h.startsWith("#buy=")) { const p = h.slice(5); history.replaceState(null, "", location.pathname); showView("landing"); waitCfg.then(() => startCheckout(p)); return; }
   if (h.startsWith("#/dashboard")) {
@@ -404,7 +409,7 @@ function closeDropdown() { $("#userDropdown").classList.remove("open"); $("#user
 /* ---------- events ---------- */
 document.addEventListener("click", (e) => {
   const t = e.target.closest("button, a"); if (!t) { if (!e.target.closest(".user-menu")) closeDropdown(); return; }
-  if (!t.closest(".user-menu")) closeDropdown();
+  if (!t.closest(".user-menu") || t.closest("#userDropdown")) closeDropdown();
   if (t.matches("[data-auth]")) { pendingPlan = null; openAuth(t.dataset.auth); }
   else if (t.matches("[data-tab-auth]")) setAuthMode(t.dataset.tabAuth);
   else if (t.matches("[data-close]")) { const m = t.closest(".modal"); if (m) closeModal(m.id); }

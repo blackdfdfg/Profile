@@ -5,6 +5,9 @@
 .s{width:34px;height:34px;border:3px solid rgba(167,139,250,.25);border-top-color:#a78bfa;border-radius:50%;animation:r .8s linear infinite;margin:0 auto 16px}@keyframes r{to{transform:rotate(360deg)}}
 a{color:#c4b5fd}p{color:#9a97ab}</style></head>
 <body><div><div class="s" id="sp"></div><h2 id="t">Signing you in with Google…</h2><p id="m">Please wait a moment.</p></div>
+<link rel="stylesheet" href="/agent/human.css?v=1">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<script src="/agent/human.js?v=1"></script>
 <script>
 (async () => {
   const API = "https://fixasif-premium.fixasif.workers.dev";
@@ -17,7 +20,11 @@ a{color:#c4b5fd}p{color:#9a97ab}</style></head>
   if (q.get("error")) return fail("Google sign-in was cancelled.");
   if (!code || !state || !st || state !== st || !ver) return fail("This sign-in link is invalid or expired. Please try again.");
   try {
-    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver, referralCode: sessionStorage.getItem("fxa_referral") || "" }) });
+    const configResponse = await fetch(API + "/config");
+    if (!configResponse.ok) throw Error("Verification configuration unavailable");
+    const config = await configResponse.json();
+    const turnstileToken = await window.FixHuman.verify("/auth/google/exchange", config.turnstileSiteKey);
+    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver, turnstileToken, referralCode: sessionStorage.getItem("fxa_referral") || "" }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.token) return fail((d.message || "Could not sign you in.").replace(/</g, "&lt;"));
     localStorage.setItem("fxa_token", d.token);

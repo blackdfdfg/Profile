@@ -79,18 +79,19 @@ export async function fulfillOrder(env, order, user, keys = []) {
   const id = crypto.randomUUID();
   await env.DB.batch([
     env.DB.prepare("UPDATE referrals SET status='successful',success_at=?,order_id=? WHERE id=? AND status='pending'").bind(Date.now(),order.id,referral.id),
-    env.DB.prepare("INSERT OR IGNORE INTO referral_payouts(id,referral_id,user_id,wallet_address,created_at) SELECT ?,id,referrer_id,?,? FROM referrals WHERE id=? AND status='successful'")
-      .bind(id,referral.wallet_address,Date.now(),referral.id)
+    env.DB.prepare("INSERT OR IGNORE INTO referral_payouts(id,referral_id,user_id,wallet_address,status,created_at) SELECT ?,id,referrer_id,'','claimable',? FROM referrals WHERE id=? AND status='successful'")
+      .bind(id,Date.now(),referral.id)
   ]);
   const payout = await env.DB.prepare('SELECT * FROM referral_payouts WHERE referral_id=?').bind(referral.id).first();
-  await queueNotification(env,'referral:' + referral.id,'🎁 Successful referral, $1 pending review\nPayout: ' + payout.id + '\nNew buyer: @' + order.x_username + '\nWallet: ' + payout.wallet_address + '\nCheck for self-referrals before confirming.', [[{text:'Confirm',callback_data:'rp:c:' + payout.id},{text:'Cancel',callback_data:'rp:x:' + payout.id}]]);
+  await queueNotification(env,'referral:' + referral.id,'🎁 Eligible referral reward: $1 USDT. Awaiting recipient claim.\nPayout: '+payout.id+'\nNew buyer: @'+order.x_username);
 }
 export async function cleanupFeatures(env) {
   await env.DB.prepare("UPDATE notification_outbox SET status='pending' WHERE status='sending' AND last_attempt<?").bind(Date.now()-300000).run();
   // A provider request interrupted after debit is refunded exactly once after 3 minutes.
   const jobs = await env.DB.prepare("SELECT id,key_id FROM credit_jobs WHERE (status='generating' AND updated_at<?) OR (status='ready' AND updated_at<?) LIMIT 100").bind(Date.now()-180000,Date.now()-1800000).all();
   for (const job of jobs.results || []) await refundJob(env,job.id,job.key_id,'interrupted');
-  await env.DB.prepare('UPDATE credit_jobs SET response_text=NULL WHERE created_at<?').bind(Date.now()-86400000).run();
+  // Clear old response text once; already-cleared rows must not be rewritten every cron.
+  await env.DB.prepare('UPDATE credit_jobs SET response_text=NULL WHERE created_at<? AND response_text IS NOT NULL').bind(Date.now()-86400000).run();
   await runApprovedPayouts(env,queueNotification);
   await flushNotifications(env);
 }
@@ -134,7 +135,7 @@ export async function featureRoute(req,env,ctx,a) {
    const w=await env.DB.prepare('SELECT * FROM credit_wallets WHERE key_id=?').bind(k.id).first();
    return {ok:true,xUsername:k.x_username,balance:w.balance,freeGranted:w.free_granted,purchased:w.purchased,used:w.used};
  }
- if(M==='POST' && p==='/credits/balance') {const k=await keyAuth(await body(req));ctx.waitUntil(flushNotifications(env));return json(req,env,await balance(k,true));}
+ if(M==='POST' && (p==='/credits/balance'||p==='/credits/lookup')) {const k=await keyAuth(await body(req));ctx.waitUntil(flushNotifications(env));return json(req,env,await balance(k,true));}
  async function usernameDestination(value) {
    const username=normX(value);
    if(!/^[a-z0-9_]{1,15}$/.test(username))fail(400,'bad_username','Enter a valid X username, without a URL');
@@ -220,19 +221,33 @@ export async function featureRoute(req,env,ctx,a) {
    const u=await requireUser(req,env),b=await body(req);await rateLimit(env,'ref-create:'+u.id,5,3600000);
    const existing=await env.DB.prepare('SELECT * FROM referral_profiles WHERE user_id=?').bind(u.id).first();
    if(existing) return json(req,env,{code:existing.code,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+existing.code,walletAddress:existing.wallet_address});
-   let address=String(b.walletAddress||'').trim();
-   if(!/^0x[a-fA-F0-9]{40}$/.test(address)||/^0x0{40}$/i.test(address)) fail(400,'bad_wallet','Enter a valid BEP20 wallet address');
-   const {getAddress}=await import('ethers');
-   try{address=getAddress(address);}catch{fail(400,'bad_wallet','Check your wallet address and checksum');}
    const code=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
-   await env.DB.prepare('INSERT INTO referral_profiles(user_id,code,wallet_address,created_at) VALUES (?,?,?,?)').bind(u.id,code,address,now()).run();
-   return json(req,env,{code,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+code,walletAddress:address});
+   await env.DB.prepare('INSERT INTO referral_profiles(user_id,code,wallet_address,created_at) VALUES (?,?,?,?)').bind(u.id,code,'',now()).run();
+   return json(req,env,{code,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+code});
+ }
+ if(M==='POST' && p==='/referrals/claim') {
+   const u=await requireUser(req,env),b=await body(req);await rateLimit(env,'ref-claim:'+u.id,20,3600000);
+   const rid=Number(b.referralId);if(!Number.isSafeInteger(rid)||rid<1)fail(400,'bad_referral','Choose an eligible referral');
+   const payout=await env.DB.prepare("SELECT p.* FROM referral_payouts p JOIN referrals r ON r.id=p.referral_id WHERE p.referral_id=? AND p.user_id=? AND r.referrer_id=? AND r.status='successful'").bind(rid,u.id,u.id).first();
+   if(!payout)fail(404,'not_eligible','No eligible reward found');
+   if(b.confirmed!==true)fail(400,'confirmation_required','Confirm the BEP20 receiving address');
+   let address=String(b.walletAddress||'').trim();if(!/^0x[a-fA-F0-9]{40}$/.test(address)||/^0x0{40}$/i.test(address))fail(400,'bad_wallet','Enter a valid BEP20 receiving address, never a private key');
+   const {getAddress}=await import('ethers');try{address=getAddress(address);}catch{fail(400,'bad_wallet','Check your address and checksum');}
+   if(payout.status!=='claimable'){
+     if(payout.wallet_address.toLowerCase()!==address.toLowerCase())fail(409,'claim_locked','This reward is already claimed. Its address cannot be changed.');
+     return json(req,env,{ok:true,payoutId:payout.id,status:payout.status,message:'Claim already received. Please allow a few hours for review and processing.'});
+   }
+   const result=await env.DB.prepare("UPDATE referral_payouts SET wallet_address=?,status='awaiting_confirmation',error=NULL WHERE id=? AND user_id=? AND status='claimable'").bind(address,payout.id,u.id).run();
+   if(result.meta?.changes!==1){const saved=await env.DB.prepare('SELECT wallet_address,status FROM referral_payouts WHERE id=? AND user_id=?').bind(payout.id,u.id).first();if(saved?.wallet_address.toLowerCase()!==address.toLowerCase())fail(409,'claim_locked','A claim was already submitted with another address');return json(req,env,{ok:true,payoutId:payout.id,status:saved.status});}
+   await queueNotification(env,'claim:'+payout.id,'🎁 Referral claim: $1 USDT\nPayout: '+payout.id+'\nWallet: '+address+'\nReview eligibility and receiving address before confirming.',[[{text:'Confirm',callback_data:'rp:c:'+payout.id},{text:'Cancel',callback_data:'rp:x:'+payout.id}]]);
+   ctx.waitUntil(flushNotifications(env));
+   return json(req,env,{ok:true,payoutId:payout.id,status:'awaiting_confirmation',message:'Processing. Please allow a few hours for owner review and transfer confirmation.'});
  }
  if(M==='GET' && p==='/referrals/dashboard') {
    const u=await requireUser(req,env),profile=await env.DB.prepare('SELECT * FROM referral_profiles WHERE user_id=?').bind(u.id).first();
-   const rows=await env.DB.prepare('SELECT r.id,r.status,r.created_at,r.success_at,p.status AS payment_status,p.tx_hash,p.amount_micros FROM referrals r LEFT JOIN referral_payouts p ON p.referral_id=r.id WHERE r.referrer_id=? ORDER BY r.id DESC LIMIT 200').bind(u.id).all();
+   const rows=await env.DB.prepare('SELECT r.id,r.status,r.created_at,r.success_at,p.id AS payout_id,p.status AS payment_status,p.tx_hash,p.amount_micros FROM referrals r LEFT JOIN referral_payouts p ON p.referral_id=r.id WHERE r.referrer_id=? ORDER BY r.id DESC LIMIT 200').bind(u.id).all();
    const stats=await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,SUM(CASE WHEN status='successful' THEN 1 ELSE 0 END) AS successful FROM referrals WHERE referrer_id=?").bind(u.id).first();
-   const payoutSummary=await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='paid' THEN amount_micros ELSE 0 END),0) AS paidMicros,COALESCE(SUM(CASE WHEN status IN ('awaiting_confirmation','approved','approved_pending_wallet','broadcast_pending','submitted') THEN amount_micros ELSE 0 END),0) AS pendingMicros FROM referral_payouts WHERE user_id=?").bind(u.id).first();
+   const payoutSummary=await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='paid' THEN amount_micros ELSE 0 END),0) AS paidMicros,COALESCE(SUM(CASE WHEN status='claimable' THEN amount_micros ELSE 0 END),0) AS claimableMicros,COALESCE(SUM(CASE WHEN status IN ('awaiting_confirmation','approved','approved_pending_wallet','broadcast_pending','submitted') THEN amount_micros ELSE 0 END),0) AS pendingMicros FROM referral_payouts WHERE user_id=?").bind(u.id).first();
    return json(req,env,{profile:profile?{code:profile.code,walletAddress:profile.wallet_address,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+profile.code}:null,referrals:rows.results||[],stats,payoutSummary,payoutsEnabled:env.PAYOUT_ENABLED==='true'});
  }
  if(M==='POST' && p==='/telegram/webhook') {
