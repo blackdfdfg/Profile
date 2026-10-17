@@ -276,3 +276,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;ba
 
 /* Quiet editorial finish: keep the existing typed introductions and motion. */
 :root{--bg:#111519;--text:#dce1e7;--muted:#a5afb9;--head:#f7f8fa;--lime:#9bbfd9;--cyan:#9bbfd9;--violet:#8496a9;--pink:#aab7c3;--grad:linear-gradient(100deg,#e5edf3,#9bbfd9);--glass-bg:#191f25;--glass-br:#35404b;--r:14px}.aurora,.cursor-glow{display:none}.grain{opacity:.025}body::before{opacity:.2}.glass{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}.glass::after{display:none}.btn-glow{background:#b5cddd;box-shadow:none;color:#12202b}.btn-glow:hover{box-shadow:none;background:#c6dbe8}.btn-glow::after{display:none}.grad,.logo b{animation:none}.nav,.nav.scrolled{background:rgba(18,24,30,.95);box-shadow:none;border-color:#3a4652}.logo img,.avatar{box-shadow:none}.idcard{box-shadow:0 14px 40px #0003;border-color:#485562}.id-shine{opacity:.3}.status .pulse{background:#a8c5b9;box-shadow:none}.socials a{box-shadow:none}.id-tags span{background:#26313b;border-color:#4a5866;color:#c3d3e0}.id-live{color:#a9c5b7}.terminal .term-bar{background:#202830}.terminal{background:#151c22}.term-body{color:#c1d2df}.service-card:hover,.work-card:hover{box-shadow:none}.btn{border-radius:9px}.nav-agent{background:#2d3d4a!important;color:#dce9f3!important}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Website refresh: quiet colour, not a monochrome portfolio. */
+:root{--cyan:#71d9d2;--lime:#b0d986;--violet:#ac9bea;--pink:#dca4be;--grad:linear-gradient(105deg,#b9d9eb 8%,#73d6ce 55%,#b5a4e9);--glass-br:#374c57}
+.logo b,.grad{background-image:var(--grad)}
+.btn-glow{background:linear-gradient(115deg,#99dace,#a8c5e8);color:#10252c}
+.btn-glow:hover{background:linear-gradient(115deg,#b0e4db,#bdd3ef)}
+.nav-agent{background:#223c40!important;border-color:#528a86!important;color:#b8ebe2!important}
+.status{border-color:#4b704c;background:#23332366}.status .pulse{background:#9cce97}
+.socials a:hover{border-color:#6aa69e;color:#a0e2d4}.id-live{color:#b6e1a9}.id-tags span:nth-child(2){background:#302c43;border-color:#5b5074;color:#d4c7ed}
+
+.agent-shot>img{display:block;width:100%;height:auto;max-height:540px;object-fit:contain;padding:16px;background:linear-gradient(135deg,#173036,#242c43)}.agent-shot-note{display:block;text-align:center;font-size:12px;padding:12px;color:#aecdcf;background:#14242b}

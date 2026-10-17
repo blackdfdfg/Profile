@@ -45,9 +45,10 @@ async function api(path, opts = {}) {
 let toastT = 0;
 function toast(msg) { const el = $("#toast"); el.textContent = nd(msg); el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2600); }
 async function copy(text, label = "Copied") {
-  try { await navigator.clipboard.writeText(text); }
-  catch (e) { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (_) {} ta.remove(); }
-  toast(label + " ✓");
+  let copied=false;
+  try { if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);copied=true;} } catch {}
+  if(!copied){const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;left:0;top:0;opacity:0";document.body.appendChild(ta);ta.select();try{copied=document.execCommand("copy")===true;}catch{}ta.remove();}
+  toast(copied?label+" ✓":"Could not copy. Select the value and copy it manually.");
 }
 function setMsg(form, text, type) { const m = $(".form-msg", form); if (!m) return; m.textContent = nd(text || ""); m.className = "form-msg" + (type ? " " + type : ""); }
 function busy(btn, on, label) { if (!btn) return; if (on) { btn.dataset.html = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + (label || "Please wait…"); } else { btn.disabled = false; if (btn.dataset.html) btn.innerHTML = btn.dataset.html; } }

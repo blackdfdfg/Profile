@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="theme.css?v=security1">
+  <link rel="stylesheet" href="theme.css?v=web-v2">
   <link rel="stylesheet" href="human.css?v=1">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -65,7 +65,6 @@
     </div>
   </header>
 
-  <nav class="account-shortcuts user-only" aria-label="Your account"><a href="#/dashboard">My keys</a><a href="#/dashboard/referrals">Referrals · earn $1</a><a href="tokens/">Credits</a><a href="#/dashboard/settings">Account</a></nav>
   <main id="viewLanding">
     <!-- HERO -->
     <section class="hero2 container">
@@ -87,11 +86,11 @@
         <div class="hero-mini">
           <a href="#guide"><i class="fa-solid fa-book-open"></i> New here? <b>See the picture guide</b></a>
         </div>
-        <p class="latest-release">Next extension build: <b>v1.9.2</b> · Compact controls, faster duplicate checks · <a href="updates/">See what changed →</a><br><small>Extension changes require v1.9.2 after approval and installation.</small></p>
+        <p class="latest-release">Extension build: <b>v2.0</b> · Clearer controls, link Memory and daily usage · <a href="updates/">See what changed →</a><br><small>These controls require v2.0 installed. Store availability depends on approval; check the listing before installing.</small></p>
         <div class="hero-stats">
           <div><b data-count="keysSold">-</b><span>Keys sold</span></div>
           <div><b data-count="activeKeys">-</b><span>Active agents</span></div>
-          <div><b>11</b><span>AI connections in v1.9.2</span></div>
+          <div><b>13</b><span>Provider connections in v2.0</span></div>
           <div><b>24/7</b><span>Telegram help</span></div>
         </div>
       </div>
@@ -174,7 +173,7 @@
       <div class="section-head reveal">
         <span class="eyebrow mono">PICTURE GUIDE</span>
         <h2>Every button, explained</h2>
-        <p>Real screenshots of the extension. Use the Memory tab for the new gear settings, saved links and billing controls.</p>
+        <p>Updated for v2.0: the extension popup, running queue and Memory settings. The Settings button is now beside Like Posts, not beside Reload.</p>
       </div>
 
       <div class="gtabs reveal" role="tablist">
@@ -186,57 +185,22 @@
         <button role="tab" data-gtab="tips"><i class="fa-solid fa-shield-heart"></i> Safety tips</button>
       </div>
 
-      <!-- LOGIN -->
+      <p class="guide-release-note">These pictures show the v2.0 interface with sample values. Publishing this guide does not update your installed extension. Check the Chrome Web Store version; update and reload open X tabs after installation.</p>
       <div class="gpanel" data-gpanel="login">
-        <figure class="gshot"><img src="assets/guide/login.webp" alt="Fix extension login screen with numbered parts" width="860" height="1026"></figure>
-        <div class="gside">
-          <h3 class="gtitle">Login screen</h3>
-          <p class="gintro">Click the <b>Fix</b> icon in your browser toolbar. This window appears first.</p>
-          <ol class="legend">
-            <li><b>Access Key</b>: paste the key you bought (looks like <span class="mono">FIX-XXXXXX-…</span>). Find it any time in <a href="#/dashboard">My keys</a>.</li>
-            <li><b>X Username</b>: the same username you entered when buying, without “@”. A different username will not work.</li>
-            <li><b>LOGIN</b>: checks your key. On success the Settings screen opens.</li>
-            <li><b>Buy Access Key</b>: opens this website to buy a key.</li>
-            <li><b>Support</b>: opens our Telegram for help.</li>
-          </ol>
-          <div class="gnote"><i class="fa-solid fa-lightbulb"></i> One key = one X account. Your key is checked again quietly in the background, so keep it active.</div>
-        </div>
-      </div>
-
-      <!-- SETTINGS -->
-      <div class="gpanel" data-gpanel="settings" hidden>
-        <figure class="gshot"><img src="assets/updates/settings.webp" alt="Fix v1.8 popup showing active Fix Credits and a separate wallet" width="320" height="1073" loading="lazy"></figure>
-        <div class="gside"><h3 class="gtitle">Choose how replies are billed</h3><p class="gintro">The highlighted source and billing banner show exactly which account pays for replies.</p><ul class="guide-points"><li><b>Fix Credits:</b> uses your key’s balance. One credit is reserved per generated reply; failed requests/posts can be refunded.</li><li><b>My API:</b> uses your own provider account. It spends no Fix Credits and never falls back to credits when your API key is missing or invalid.</li><li><b>Credit wallet:</b> see your balance, Buy Credits, and Reload balance. A friend can pay using your Access Key or purchased X username from their own website account.</li><li><b>Reply Style:</b> up to 500 Unicode characters, with a live counter.</li><li><b>Modes:</b> select Auto-Scroll or Link Engage, then Save Settings.</li></ul><div class="gnote">Store v1.6 has the older popup. This screenshot shows the latest update.</div></div>
-      </div>
-
-      <!-- AUTO-SCROLL -->
+<figure class="gshot"><img src="assets/guide/v2/login.webp" width="360" height="474" alt="Fix v2.0 login: Access Key and X username" loading="lazy"><figcaption>Open the Fix extension from your browser toolbar. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure>
+<div class="gside"><h3 class="gtitle">Log in with your purchased key</h3><ol class="legend"><li><b>Access Key:</b> paste your purchased key. Find it in <a href="#/dashboard">My keys</a>; never share it publicly.</li><li><b>X username:</b> use the username linked to that key and sign in to the same account on x.com.</li><li><b>Login:</b> opens the settings popup after validation. Three definite failed key/username checks trigger a five-minute local cooldown; network/server errors do not count.</li><li><b>Profile Reload:</b> on the X-page panel, follow the cursor hint and press Reload to detect your profile before starting.</li></ol><div class="gnote">Website login and extension Access Key login are different. Updating this website does not install v2.0 for you.</div></div></div>
+      <div class="gpanel" data-gpanel="settings" hidden><div class="gshot-stack">
+<figure class="gshot"><img src="assets/guide/v2/credits.webp" width="360" height="531" alt="v2.0 Use credit balance popup with Balance, Today used, All time used and compact Modes" loading="lazy"><figcaption>Fix Credits selected. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure><figure class="gshot"><img src="assets/guide/v2/api.webp" width="360" height="710" alt="v2.0 Use API key popup with provider, model and API key fields" loading="lazy"><figcaption>My API selected: your provider account pays. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure>
+</div><div class="gside"><h3 class="gtitle">Your balance. Your reply source.</h3><ul class="guide-points"><li><b>Balance + Top up:</b> stay at the top, including in API mode. Reload fetches the current balance.</li><li><b>Use credit balance:</b> shows Today used, All time used and the one-credit-per-reply rule. A credit is reserved for generation; eligible failures are refunded.</li><li><b>Today used:</b> confirmed credit replies on this browser for this Access Key. The day starts at <b>05:00 Bangladesh time (Asia/Dhaka)</b>. Both Start buttons check rollover; reads and subsequent settlement also check. Idle UI does not run a reset alarm. Other devices are not combined.</li><li><b>All time used:</b> server-side credit-wallet usage for your Access Key. The same key reloads its current total after logout/login; the daily reset does not reset it. It is not a count of My API replies.</li><li><b>Use API key:</b> choose your provider and model. MiMo and Qwen are included. The catalogue shows starter options before a key; a valid provider key can load available text models. Availability and pricing depend on your provider.</li><li><b>No credit fallback:</b> missing or invalid API keys never silently spend Fix Credits. Stop the queue before changing source.</li><li><b>Reply Style + Modes:</b> up to 500 Unicode characters; select compact Auto-Scroll or Link Engage, then Save Settings.</li></ul><div class="gnote">Today used is browser-local. Uninstalling or clearing extension data removes it and local Memory. The server credit wallet is separate. On the first upgrade, an available old daily count can be carried once; subsequent days use the 05:00 boundary.</div></div></div>
       <div class="gpanel" data-gpanel="scroll" hidden>
-        <figure class="gshot"><img src="assets/guide/ctrl.webp" alt="Auto-Scroll control panel with numbered parts" width="615" height="1400" loading="lazy"></figure>
-        <div class="gside">
-          <h3 class="gtitle">Auto-Scroll panel</h3>
-          <p class="gintro">Open <b>x.com</b>. The panel appears on the page (or tap the round <b>Fix</b> button at the bottom-right). Drag it anywhere and resize it from the corner.</p>
-          <ol class="legend">
-            <li><b>Profile Reload</b>: reads which X account is logged in. It must match your key’s username. Do this once.</li>
-            <li><b>Settings</b>: show or hide the settings area.</li>
-            <li><b>Keep open</b>: keeps the panel open after a page reload.</li>
-            <li><b>Comment gap</b>: 4 wait times in seconds. A random one is used between comments, so it looks human.</li>
-            <li><b>Run time (min)</b>: stops automatically after this many minutes. <b>0</b> = no limit.</li>
-            <li><b>Like posts</b>: also likes each post it replies to.</li>
-            <li><b>Don’t repost</b>: never reposts anything.</li>
-            <li><b>Skip reposted posts</b>: ignores posts that are reposts from others.</li>
-            <li><b>Live Status</b>: shows status, timer, comments, likes, the next wait and the current gap.</li>
-            <li><b>Start Auto-Scroll</b>: starts the agent.</li>
-            <li><b>Stop</b>: stops it right away.</li>
-          </ol>
-          <div class="gnote"><i class="fa-solid fa-lightbulb"></i> Good start: gaps 60 · 90 · 120 · 150 sec, run time 30 min, Like on.</div>
-        </div>
-      </div>
-
-      <!-- LINK ENGAGE -->
-      <div class="gpanel" data-gpanel="link" hidden><figure class="gshot"><img src="assets/updates/link-panel-v1.9.webp" alt="Link Engage queue with Find Links, Reset, View Links, optional Like switch and required comments" width="360" height="590" loading="lazy"></figure><div class="gside"><h3 class="gtitle">Link Engage, step by step</h3><p class="gintro">Turn on Link Engage in the extension popup and open x.com. Check Profile Reload before running a queue.</p><ul class="guide-points"><li><b>Paste and Find Links:</b> extracts post links, removes repeated status IDs, your own username and recent attempts saved in Memory.</li><li><b>Comments + optional Like:</b> Link Engage comments are required in v1.9. Turn Like on to also like posts; turning it off does not stop comments.</li><li><b>Start / Stop:</b> Find Links only builds the queue. Start begins; Stop pauses the run.</li><li><b>Reset:</b> clears the queue, progress and Failed Export archive, not saved Memory. Find Links preserves Failed Export; each failed link has an Open button. View Links returns the queue to the text box.</li><li><b>Gear beside Reload:</b> opens Memory, current source and balance. Delay Between and Pause After stay on the main panel.</li><li><b>Delay:</b> 0 and 1 second are accepted. One of four values is chosen each time. Set all four to 1 for a 1-second configured wait; loading, AI generation and posting still take additional time.</li><li><b>Home / Back:</b> optional navigation happens after groups of 3, 4, 5, 6 or 9 processed links, not after every comment. This does not guarantee account safety.</li></ul><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Where is Memory? →</a></div></div>
-
-      <div class="gpanel" data-gpanel="memory" hidden><figure class="gshot"><img src="assets/guide/memory-explained.webp" alt="Numbered Memory guide: gear, saved count, on/off switch, Reset memory, reply source and balance" width="440" height="710" loading="lazy"><figcaption>Open the gear immediately to the right of Profile Reload.</figcaption></figure><div class="gside"><h3 class="gtitle">Memory remembers attempts for 24 hours</h3><p class="gintro">Memory is local history, not your current queue. Completed and failed attempts are recorded separately for each X username.</p><ol class="legend"><li><b>Gear:</b> next to Reload. Open it to find all Memory settings. Back returns to the queue.</li><li><b>Saved count:</b> the number of unexpired link IDs stored for this X account.</li><li><b>Memory on/off:</b> on filters and saves attempts; off stops both. Turning off does not erase older records.</li><li><b>Reset memory:</b> clears this account’s saved attempts after confirmation. Ordinary queue Reset does not.</li><li><b>Reply source:</b> shows Fix Credits or My API, with its billing rule.</li><li><b>Credit balance:</b> shows available credits and Reload balance. My API does not use this balance.</li></ol><div class="gnote"><b>100 → 95 → 85:</b> 100 pasted links minus 2 duplicates and 3 of your own links leaves 95. After 10 completed or failed attempts, Stop → View Links → Find Links leaves 85 when Memory is on.</div><p>Find Links removes expired records after 24 hours. Duplicate detection uses the post/status ID, even when the URL’s username or query differs. To retry a failed attempt sooner, stop the queue and reset Memory deliberately. If submission was unconfirmed, inspect the post manually: its separate 24-hour automatic-retry guard remains, even after Memory Reset.</p><p><b>How it works</b> at the bottom of gear settings opens the English offline guide.</p><a class="btn btn-ghost" href="assets/updates/Fix-v1.9.2-Memory-Link-Engage-Guide.pdf" target="_blank" rel="noopener">Open English PDF guide →</a></div></div>
-
+<figure class="gshot"><img src="assets/guide/v2/auto-scroll.webp" width="316" height="782" alt="Fix v2.0 Auto-Scroll panel with profile reload, timing and start stop controls" loading="lazy"><figcaption>Auto-Scroll controls on the X page. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure>
+<div class="gside"><h3 class="gtitle">Auto-Scroll on x.com</h3><ol class="legend"><li><b>Enable:</b> choose Auto-Scroll in the popup and Save Settings. Open x.com and tap the floating Fix launcher if the panel is hidden.</li><li><b>Profile Reload:</b> detect the account and ensure it matches your Access Key.</li><li><b>Settings:</b> review timing and action controls. Choose a comment gap and run time appropriate for your account; 0 run time means no automatic time limit.</li><li><b>Start / Stop:</b> Start checks licence and the local Today boundary, then starts the run. Stop pauses processing.</li><li><b>Status:</b> follow the timer and counters. Stop before changing account or reply source.</li></ol><div class="gnote">Timing and visual scrolling do not bypass X rules or rate limits. Use only accounts you are authorised to operate.</div></div></div>
+      <div class="gpanel" data-gpanel="link" hidden><div class="gshot-stack">
+<figure class="gshot"><img src="assets/guide/v2/link-ready.webp" width="360" height="664" alt="v2.0 stopped Link Engage queue with input, Find Links, Reset and Settings beside Like Posts" loading="lazy"><figcaption>Before Start: paste and queue controls are visible. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure><figure class="gshot"><img src="assets/guide/v2/link-running.webp" width="360" height="663" alt="v2.0 running Link Engage panel showing Live activity instead of the link editor" loading="lazy"><figcaption>While running: Live activity replaces the input and queue-edit buttons. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure>
+</div><div class="gside"><h3 class="gtitle">Build the queue. Then start.</h3><ol class="legend"><li><b>Reload first:</b> follow the cursor hint on first use and detect the same X account as your key.</li><li><b>Paste → Find Links:</b> builds the queue; it does not start engagement. A five-second notice explains how many Memory, duplicate and own links were removed. Duplicates are compared by post ID.</li><li><b>Like Posts + Settings:</b> share one row. Comments remain required; Like is optional. There is only one Settings button, beside Like Posts.</li><li><b>Start:</b> hides the link editor, Find Links, Reset and View Links while running. Live activity appears in their place; progress, delay, pause and Stop remain available.</li><li><b>Stop:</b> restores the queue editor. View Links puts the queue back in the text box. Reset clears queue/progress/Failed Export, not Memory.</li><li><b>Reply flow:</b> the agent opens a post, may preview-scroll, opens the composer, uses Generate, then submits Reply and checks confirmation. Manual Generate only prepares a draft.</li><li><b>Retry:</b> a recoverable pre-submit failure can be reopened once. Already-commented or reply-restricted posts, account changes and provider/auth/rate/credit errors are not automatically reopened. An unconfirmed submission is not auto-retried: inspect it manually to avoid a duplicate.</li><li><b>Failed Export:</b> shows failed links, reasons and an Open action. Find Links keeps that archive; ordinary Reset clears it.</li></ol><p>Delay Between chooses from your four values; 0 and 1 second are accepted but loading, AI and posting add time. Pause After sets a timed break. Faster is not safer.</p><a href="#guide" data-guide-tab="memory" class="btn btn-ghost">Open Memory instructions →</a></div></div>
+      <div class="gpanel" data-gpanel="memory" hidden><div class="gshot-stack">
+<figure class="gshot"><img src="assets/guide/v2/memory.webp" width="360" height="817" alt="v2.0 Memory settings opened from Settings beside Like Posts" loading="lazy"><figcaption>Stop the queue, then press Settings beside Like Posts. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure><figure class="gshot"><img src="assets/guide/v2/memory-selected.webp" width="360" height="935" alt="v2.0 Remove selected links form with link input and Confirm removal" loading="lazy"><figcaption>Remove only matching links for the current X account. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure><figure class="gshot"><img src="assets/guide/v2/memory-confirm.webp" width="360" height="915" alt="v2.0 Remove all memory warning and separate confirmation button" loading="lazy"><figcaption>Remove all requires a second, explicit confirmation. v2.0 UI; local sample data, not a real transaction or X post.</figcaption></figure>
+</div><div class="gside"><h3 class="gtitle">Memory is history, not your queue</h3><ol class="legend"><li><b>Open Settings:</b> beside Like Posts. There is no settings gear beside Reload in v2.0. Back returns to the main panel.</li><li><b>24-hour Memory:</b> completed and failed attempts are saved locally, separately per X username. The count excludes expired records.</li><li><b>Memory on/off:</b> on saves and filters attempts; off stops both without immediately deleting older history. Duplicate and own-post filtering still work.</li><li><b>Remove selected links:</b> stop the queue, paste post links and Confirm removal. Only matching records for this account are removed; other accounts are unchanged.</li><li><b>Remove all memory:</b> read the warning, then press Confirm removal. Previously saved posts may be processed again. Cancel leaves them unchanged.</li><li><b>Unconfirmed submissions:</b> their separate 24-hour retry guards survive either Memory removal. Inspect those posts manually.</li><li><b>Reply source / balance:</b> shows Fix Credits or My API, billing guidance, Top up and Reload balance. Change source in the extension popup, not here.</li><li><b>How it works:</b> opens the packaged English guide / PDF.</li></ol><div class="gnote">Queue Reset never clears Memory. Clearing browser/extension data can remove local history. The 2GB chip is decorative artwork, not allocated storage or an account-safety guarantee.</div><p><b>100 → 95 → 85:</b> 100 links minus 2 duplicates and 3 own posts leaves 95. After 10 attempts, Stop → View Links → Find Links leaves 85 with Memory on.</p><a class="btn btn-ghost" href="assets/updates/Fix-v2.0-Guide.pdf" target="_blank" rel="noopener">Open v2.0 English PDF →</a></div></div>
       <!-- TIPS -->
       <div class="gpanel" data-gpanel="tips" hidden>
         <div class="tips">
@@ -514,8 +478,8 @@
   <div id="printArea" aria-hidden="true"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="human.js?v=1"></script>
-  <script src="referrals.js?v=security1"></script>
-  <script src="app.js?v=security1"></script>
+  <script src="referrals.js?v=web-v2"></script>
+  <script src="app.js?v=web-v2"></script>
   <script src="guide.js"></script>
 </body>
 </html>
