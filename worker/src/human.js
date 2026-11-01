@@ -4,6 +4,7 @@ export const WEBSITE_ACTIONS = Object.freeze({
   '/auth/signup': 'signup',
   '/auth/login': 'login',
   '/auth/google/exchange': 'google_login',
+  '/trial/claim':'trial_claim',
   '/create-order': 'license_order',
   '/credits/lookup': 'credit_lookup',
   '/credits/resolve': 'credit_resolve',

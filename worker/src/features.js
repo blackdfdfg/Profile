@@ -10,6 +10,9 @@ export function creditQuote(quantity) {
   return { quantity: n, unitMicros, amountMicros: n * unitMicros, amount: n * unitMicros / 1000000 };
 }
 export async function grantWelcome(env, keyId) {
+  const trial=await env.DB.prepare('SELECT 1 AS yes FROM trial_claims t JOIN access_keys k ON k.key=t.access_key WHERE k.id=?').bind(keyId).first();
+  if(trial){await env.DB.prepare('INSERT OR IGNORE INTO credit_wallets(key_id,balance,free_granted) VALUES (?,0,0)').bind(keyId).run();return;}
+
   await env.DB.batch([
     env.DB.prepare('INSERT OR IGNORE INTO credit_wallets(key_id,balance,free_granted) VALUES (?,300,300)').bind(keyId),
     env.DB.prepare("INSERT OR IGNORE INTO credit_ledger(event_id,key_id,delta,reason,created_at) VALUES (?,?,300,'welcome',?)").bind('welcome:' + keyId,keyId,Date.now())
@@ -65,20 +68,25 @@ export async function fulfillOrder(env, order, user, keys = []) {
     await queueNotification(env,'sale:' + order.id,'✅ Credit topup #' + order.id + '\nUser: ' + user.email + '\n@' + order.x_username + '\nCredits: ' + order.credit_quantity + '\nPaid: ' + order.amount + ' USDT');
     return;
   }
+  if(order.kind==='trial'||!(Number(order.amount)>0)||order.status!=='paid')return;
   for (const k of keys) {
     const row = await env.DB.prepare('SELECT id FROM access_keys WHERE key=?').bind(k.key).first();
     if (row) await grantWelcome(env,row.id);
   }
   await queueNotification(env,'sale:' + order.id,'✅ Bot purchased #' + order.id + '\nUser: ' + user.email + '\nX: @' + order.x_username + '\nPlan: ' + order.package + '\nPaid: ' + order.amount + ' USDT\nKeys delivered: ' + keys.length);
   if (!keys.length) return; // Only qualify after the licence was actually delivered.
-  const referral = await env.DB.prepare("SELECT r.*,p.wallet_address FROM referrals r JOIN referral_profiles p ON p.user_id=r.referrer_id WHERE r.referred_id=? AND r.status='pending'").bind(user.id).first();
+  // A different website account must not make the same X username a first paid buyer again.
+  const firstPaid=await env.DB.prepare("SELECT id FROM orders WHERE lower(x_username)=? AND status='paid' AND kind='license' AND amount>0 ORDER BY paid_at ASC,id ASC LIMIT 1").bind(order.x_username).first();
+  if(firstPaid&&firstPaid.id!==order.id)return;
+
+  const referral = await env.DB.prepare("SELECT r.*,p.wallet_address FROM referrals r JOIN referral_profiles p ON p.user_id=r.referrer_id WHERE r.referred_id=? AND r.status IN ('pending','trial')").bind(user.id).first();
   if (!referral || referral.referrer_id === user.id) return;
   // Do not automatically reward the referrer's own licensed X identity.
   const own = await env.DB.prepare("SELECT id FROM access_keys WHERE user_id=? AND lower(x_username)=? AND status='sold' LIMIT 1").bind(referral.referrer_id,order.x_username).first();
-  if (own) { await env.DB.prepare("UPDATE referrals SET status='review' WHERE id=? AND status='pending'").bind(referral.id).run(); return; }
+  if (own) { await env.DB.prepare("UPDATE referrals SET status='review' WHERE id=? AND status IN ('pending','trial')").bind(referral.id).run(); return; }
   const id = crypto.randomUUID();
   await env.DB.batch([
-    env.DB.prepare("UPDATE referrals SET status='successful',success_at=?,order_id=? WHERE id=? AND status='pending'").bind(Date.now(),order.id,referral.id),
+    env.DB.prepare("UPDATE referrals SET status='successful',success_at=?,order_id=? WHERE id=? AND status IN ('pending','trial')").bind(Date.now(),order.id,referral.id),
     env.DB.prepare("INSERT OR IGNORE INTO referral_payouts(id,referral_id,user_id,wallet_address,status,created_at) SELECT ?,id,referrer_id,'','claimable',? FROM referrals WHERE id=? AND status='successful'")
       .bind(id,Date.now(),referral.id)
   ]);
@@ -245,8 +253,8 @@ export async function featureRoute(req,env,ctx,a) {
  }
  if(M==='GET' && p==='/referrals/dashboard') {
    const u=await requireUser(req,env),profile=await env.DB.prepare('SELECT * FROM referral_profiles WHERE user_id=?').bind(u.id).first();
-   const rows=await env.DB.prepare('SELECT r.id,r.status,r.created_at,r.success_at,p.id AS payout_id,p.status AS payment_status,p.tx_hash,p.amount_micros FROM referrals r LEFT JOIN referral_payouts p ON p.referral_id=r.id WHERE r.referrer_id=? ORDER BY r.id DESC LIMIT 200').bind(u.id).all();
-   const stats=await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,SUM(CASE WHEN status='successful' THEN 1 ELSE 0 END) AS successful FROM referrals WHERE referrer_id=?").bind(u.id).first();
+   const rows=await env.DB.prepare(`SELECT r.id,r.status,r.created_at,r.success_at,p.id AS payout_id,p.status AS payment_status,p.tx_hash,p.amount_micros FROM referrals r LEFT JOIN referral_payouts p ON p.referral_id=r.id WHERE r.referrer_id=? AND r.status!='trial' ORDER BY r.id DESC LIMIT 200`).bind(u.id).all();
+   const stats=await env.DB.prepare("SELECT COUNT(*) AS total,SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,SUM(CASE WHEN status='successful' THEN 1 ELSE 0 END) AS successful FROM referrals WHERE referrer_id=? AND status!='trial'").bind(u.id).first();
    const payoutSummary=await env.DB.prepare("SELECT COALESCE(SUM(CASE WHEN status='paid' THEN amount_micros ELSE 0 END),0) AS paidMicros,COALESCE(SUM(CASE WHEN status='claimable' THEN amount_micros ELSE 0 END),0) AS claimableMicros,COALESCE(SUM(CASE WHEN status IN ('awaiting_confirmation','approved','approved_pending_wallet','broadcast_pending','submitted') THEN amount_micros ELSE 0 END),0) AS pendingMicros FROM referral_payouts WHERE user_id=?").bind(u.id).first();
    return json(req,env,{profile:profile?{code:profile.code,walletAddress:profile.wallet_address,url:(env.SITE_ORIGIN||'https://fixasif.com')+'/agent/?ref='+profile.code}:null,referrals:rows.results||[],stats,payoutSummary,payoutsEnabled:env.PAYOUT_ENABLED==='true'});
  }

@@ -132,7 +132,7 @@ async function googleLogin() {
 }
 
 /* ---------- pricing ---------- */
-const FEATS = ["Your API or Fix Credits", "300 welcome credits once", "Auto-Scroll like & comment", "Link Engage (bulk links)", "PC + Android phone", "Works with 1 X account"];
+const FEATS = ["Your API or Fix Credits", "300 welcome credits once", "Auto-Scroll like & comment", "Link Engage (bulk links)", "Profile follow-up + Like Engage", "PC + Android phone", "Works with 1 X account"];
 function renderPricing() {
   const pk = (CFG.packages && CFG.packages.length ? CFG.packages : FALLBACK_PACKAGES);
   const base = pk[0] ? pk[0].price / pk[0].months : 0;
@@ -157,11 +157,12 @@ function showStep(n) {
   $$(".stepper span").forEach((s, i) => { s.classList.toggle("active", i + 1 === n); s.classList.toggle("done", i + 1 < n); });
 }
 function startCheckout(planId) {
-  const p = (CFG.packages || FALLBACK_PACKAGES).find((x) => x.id === planId);
+  const p = planId==='trial'?{id:'trial',name:'15-day trial',days:15,price:0}:(CFG.packages || FALLBACK_PACKAGES).find((x) => x.id === planId);
   if (!p) return;
   if (!USER) { pendingPlan = planId; openAuth("signup"); toast("Create an account (or log in) to buy"); return; }
   order = { plan: p };
-  $("#payPlan").textContent = `${p.name}: ${p.months} months · ${p.price} USDT`;
+  $("#payPlan").textContent = p.id==='trial'?'15-day trial · No payment · No free AI credits':`${p.name}: ${p.months} months · ${p.price} USDT`;
+  const trial=p.id==='trial';$('#trialFields').hidden=!trial;$('#trialResult').hidden=true;$('#xUserBtn').hidden=false;$('#xUserBtn').textContent=trial?'Claim 15-day trial':'Continue to payment';$('#xUserForm').trialOwn.checked=false;
   showStep(1);
   $("#xUserForm").hidden = false; $("#payDetails").hidden = true; setMsg($("#xUserForm"), "");
   $("#xUserForm").xUsername.value = localStorage.getItem("fxa_last_xuser") || "";
@@ -176,6 +177,13 @@ async function submitXUser(e) {
   if (!/^[a-z0-9_]{1,15}$/.test(xu)) return setMsg(f, "Enter a valid X username (letters, numbers, _, max 15)", "err");
   setMsg(f, ""); const btn = $("#xUserBtn"); busy(btn, true, "Creating your order…");
   try {
+    if(order.plan.id==='trial'){
+      if(!f.trialOwn.checked)throw new Error('Confirm that this is your own X account first.');
+      const d=await api('/trial/claim',{body:{xUsername:xu,coupon:f.trialCoupon.value}});
+      $('#trialKey').textContent=d.accessKey;$('#trialExpiry').textContent='Expires: '+fmtDT(d.expiresAt);$('#trialResult').hidden=false;$('#xUserBtn').hidden=true;
+      $('#copyTrialKey').onclick=()=>copy(d.accessKey,'Access Key copied');$('#trialDashboard').onclick=()=>closeModal('payModal');localStorage.setItem('fxa_last_xuser',xu);
+      setMsg(f,'Trial ready. Copy your key, open the extension, and log in with @'+xu+'.','ok');return;
+    }
     const d = await api("/create-order", { body: { packageId: order.plan.id, xUsername: xu } });
     order = { ...order, ...d };
     localStorage.setItem("fxa_last_xuser", xu);

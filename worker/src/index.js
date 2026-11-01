@@ -1,4 +1,5 @@
 import { featureRoute, grantWelcome, attachReferral, fulfillOrder, flushNotifications, cleanupFeatures } from "./features.js";
+import {claimTrial} from "./trial.js";
 import { WEBSITE_ACTIONS, validateHuman } from "./human.js";
 /* FixAsif Agent - Cloudflare Worker (D1 binding: DB)
    Secrets: BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET,
@@ -212,6 +213,12 @@ async function route(req, env, ctx) {
     }
   }
 
+  if(M==='POST'&&p==='/trial/claim'){
+    const u=await requireUser(req,env),b=await body(req);
+    await rateLimit(env,'trial-user:'+u.id,5,3600000);
+    await rateLimit(env,'trial-ip:'+ip,15,3600000);
+    return json(req,env,await claimTrial(env,u,b,{fail,now,normX}));
+  }
   const featureResponse = await featureRoute(req, env, ctx, { json, body, fail, requireUser, rateLimit, normX, now, clientIp, timingSafeEq });
   if (featureResponse) return featureResponse;
 
@@ -219,6 +226,7 @@ async function route(req, env, ctx) {
 
   if (M === "GET" && p === "/config") {
     return json(req, env, {
+      trial:{days:15,coupon:'E8JQ42B7MS',freeCredits:0,oncePerUsername:true},
       packages: Object.entries(PACKAGES).map(([id, v]) => ({ id, ...v, perKey: +(v.price / v.keys).toFixed(2) })),
       binanceUid: env.BINANCE_UID,
       turnstileSiteKey: env.TURNSTILE_SITE_KEY,
@@ -232,7 +240,7 @@ async function route(req, env, ctx) {
   }
 
   if (M === "GET" && p === "/stats") {
-    const sold = await env.DB.prepare("SELECT COUNT(*) AS n FROM access_keys WHERE status = 'sold'").first();
+    const sold = await env.DB.prepare("SELECT COUNT(*) AS n FROM access_keys WHERE status = 'sold' AND NOT EXISTS (SELECT 1 FROM trial_claims WHERE access_key=access_keys.key)").first();
     const active = await env.DB.prepare("SELECT COUNT(*) AS n FROM access_keys WHERE status = 'sold' AND expires_at > ?").bind(now()).first();
     const users = await env.DB.prepare("SELECT COUNT(*) AS n FROM users").first();
     return json(req, env, { keysSold: sold.n, activeKeys: active.n, users: users.n });
@@ -427,11 +435,11 @@ async function route(req, env, ctx) {
   if (M === "GET" && p === "/dashboard/keys") {
     const u = await requireUser(req, env);
     const r = await env.DB.prepare(
-      "SELECT k.key, k.status, k.sold_at, k.expires_at, k.x_username, k.last_login_at, o.package, o.amount, o.binance_order_id, o.id AS oid FROM access_keys k LEFT JOIN orders o ON o.id = k.order_id WHERE k.user_id = ? ORDER BY k.sold_at DESC"
+      "SELECT k.key, k.status, k.sold_at, k.expires_at, k.x_username, k.last_login_at, t.access_key AS trial_key, o.package, o.amount, o.binance_order_id, o.id AS oid FROM access_keys k LEFT JOIN orders o ON o.id = k.order_id LEFT JOIN trial_claims t ON t.access_key=k.key WHERE k.user_id = ? ORDER BY k.sold_at DESC"
     ).bind(u.id).all();
     return json(req, env, { keys: (r.results || []).map((k) => ({
       key: k.key, status: keyStatus(k), soldAt: k.sold_at, expiresAt: k.expires_at,
-      xUsername: k.x_username, lastLoginAt: k.last_login_at, package: PACKAGES[k.package] ? PACKAGES[k.package].name : k.package,
+      xUsername: k.x_username, lastLoginAt: k.last_login_at, package: PACKAGES[k.package] ? PACKAGES[k.package].name : (k.trial_key ? "15-day trial" : (k.package || "Access Key")),
       amount: k.amount, binanceOrderId: k.binance_order_id, orderId: k.oid
     })), extensionUrl: extUrl(env) });
   }

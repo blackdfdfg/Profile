@@ -287,3 +287,5 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;ba
 .socials a:hover{border-color:#6aa69e;color:#a0e2d4}.id-live{color:#b6e1a9}.id-tags span:nth-child(2){background:#302c43;border-color:#5b5074;color:#d4c7ed}
 
 .agent-shot>img{display:block;width:100%;height:auto;max-height:540px;object-fit:contain;padding:16px;background:linear-gradient(135deg,#173036,#242c43)}.agent-shot-note{display:block;text-align:center;font-size:12px;padding:12px;color:#aecdcf;background:#14242b}
+
+.trial-root{padding:18px;border:1px solid #358b95;border-radius:16px;background:linear-gradient(110deg,#132e39,#242a49);margin-top:24px}.agent-shot img{object-fit:contain!important;width:100%;height:auto!important}.trial-root a{color:#9ee8dc}

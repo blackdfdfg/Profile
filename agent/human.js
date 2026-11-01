@@ -3,7 +3,7 @@
   'use strict';
   const actions = Object.freeze({
     '/auth/signup':'signup', '/auth/login':'login', '/auth/google/exchange':'google_login',
-    '/create-order':'license_order', '/credits/lookup':'credit_lookup',
+    '/trial/claim':'trial_claim', '/create-order':'license_order', '/credits/lookup':'credit_lookup',
     '/credits/resolve':'credit_resolve', '/credits/order':'credit_order',
     '/referrals/create':'referral_create', '/referrals/claim':'referral_claim',
     '/dashboard/update':'account_update'
