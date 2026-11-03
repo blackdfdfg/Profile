@@ -24,7 +24,7 @@ a{color:#c4b5fd}p{color:#9a97ab}</style></head>
     if (!configResponse.ok) throw Error("Verification configuration unavailable");
     const config = await configResponse.json();
     const turnstileToken = await window.FixHuman.verify("/auth/google/exchange", config.turnstileSiteKey);
-    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver, turnstileToken, referralCode: sessionStorage.getItem("fxa_referral") || "" }) });
+    const r = await fetch(API + "/auth/google/exchange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, codeVerifier: ver, turnstileToken }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.token) return fail((d.message || "Could not sign you in.").replace(/</g, "&lt;"));
     localStorage.setItem("fxa_token", d.token);
