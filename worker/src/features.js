@@ -14,8 +14,8 @@ export async function grantWelcome(env, keyId) {
   if(trial){await env.DB.prepare('INSERT OR IGNORE INTO credit_wallets(key_id,balance,free_granted) VALUES (?,0,0)').bind(keyId).run();return;}
 
   await env.DB.batch([
-    env.DB.prepare('INSERT OR IGNORE INTO credit_wallets(key_id,balance,free_granted) VALUES (?,300,300)').bind(keyId),
-    env.DB.prepare("INSERT OR IGNORE INTO credit_ledger(event_id,key_id,delta,reason,created_at) VALUES (?,?,300,'welcome',?)").bind('welcome:' + keyId,keyId,Date.now())
+    env.DB.prepare('INSERT OR IGNORE INTO credit_wallets(key_id,balance,free_granted) VALUES (?,500,500)').bind(keyId),
+    env.DB.prepare("INSERT OR IGNORE INTO credit_ledger(event_id,key_id,delta,reason,created_at) SELECT ?,?,500,'welcome',? WHERE changes()=1").bind('welcome:' + keyId,keyId,Date.now())
   ]);
 }
 export async function queueNotification(env, id, text, buttons = null) {
@@ -72,6 +72,11 @@ export async function fulfillOrder(env, order, user, keys = []) {
   for (const k of keys) {
     const row = await env.DB.prepare('SELECT id FROM access_keys WHERE key=?').bind(k.key).first();
     if (row) await grantWelcome(env,row.id);
+  }
+  if (order.package === 'sixmonth') {
+    const stage = keys.length ? 'delivered' : 'pending';
+    await queueNotification(env, 'license:' + order.id + ':' + stage, '✅ Fix Access purchase #' + order.id + '\nUser: ' + user.email + '\nX: @' + order.x_username + '\nPlan: 6 months · $2 USDT\nPaid: ' + order.amount + ' USDT\nStatus: ' + (keys.length ? 'Key delivered · 500 welcome credits for new wallet' : 'Paid · waiting for an available key'));
+    return; // The new plan does not offer referral rewards.
   }
   await queueNotification(env,'sale:' + order.id,'✅ Bot purchased #' + order.id + '\nUser: ' + user.email + '\nX: @' + order.x_username + '\nPlan: ' + order.package + '\nPaid: ' + order.amount + ' USDT\nKeys delivered: ' + keys.length);
   if (!keys.length) return; // Only qualify after the licence was actually delivered.

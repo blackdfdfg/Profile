@@ -1,5 +1,4 @@
-import { featureRoute, grantWelcome, attachReferral, fulfillOrder, flushNotifications, cleanupFeatures } from "./features.js";
-import {claimTrial} from "./trial.js";
+import { featureRoute, grantWelcome, fulfillOrder, flushNotifications, cleanupFeatures } from "./features.js";
 import { WEBSITE_ACTIONS, validateHuman } from "./human.js";
 /* FixAsif Agent - Cloudflare Worker (D1 binding: DB)
    Secrets: BINANCE_API_KEY, BINANCE_SECRET, TURNSTILE_SECRET,
@@ -8,6 +7,7 @@ import { WEBSITE_ACTIONS, validateHuman } from "./human.js";
    Vars:    BINANCE_UID, TURNSTILE_SITE_KEY, SITE_ORIGIN, GOOGLE_REDIRECT_URI */
 
 const PACKAGES = {
+  sixmonth:  { name: "Fix Access", price: 2, keys: 1, months: 6 },
   starter:   { name: "Starter",    price: 5,  keys: 1, months: 3 },
   standard:  { name: "Standard",   price: 7,  keys: 1, months: 6,  badge: "Save 30%" },
   bestvalue: { name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value - Save 55%" }
@@ -203,6 +203,8 @@ async function route(req, env, ctx) {
   const M = req.method;
   const ip = clientIp(req);
 
+  if (M === 'POST' && (p === '/trial/claim' || p === '/referrals/create')) fail(410, 'offer_ended', 'This offer is no longer available. Contact support if you need help.');
+
   // Reject unverified website mutations BEFORE authentication reads, rate-limit
   // writes, payment lookups or referral work. Never trust Origin as verification.
   if (M === "POST" && WEBSITE_ACTIONS[p]) {
@@ -213,12 +215,6 @@ async function route(req, env, ctx) {
     }
   }
 
-  if(M==='POST'&&p==='/trial/claim'){
-    const u=await requireUser(req,env),b=await body(req);
-    await rateLimit(env,'trial-user:'+u.id,5,3600000);
-    await rateLimit(env,'trial-ip:'+ip,15,3600000);
-    return json(req,env,await claimTrial(env,u,b,{fail,now,normX}));
-  }
   const featureResponse = await featureRoute(req, env, ctx, { json, body, fail, requireUser, rateLimit, normX, now, clientIp, timingSafeEq });
   if (featureResponse) return featureResponse;
 
@@ -226,8 +222,7 @@ async function route(req, env, ctx) {
 
   if (M === "GET" && p === "/config") {
     return json(req, env, {
-      trial:{days:15,coupon:'E8JQ42B7MS',freeCredits:0,oncePerUsername:true},
-      packages: Object.entries(PACKAGES).map(([id, v]) => ({ id, ...v, perKey: +(v.price / v.keys).toFixed(2) })),
+      packages: Object.entries({sixmonth: PACKAGES.sixmonth}).map(([id, v]) => ({ id, ...v, perKey: +(v.price / v.keys).toFixed(2) })),
       binanceUid: env.BINANCE_UID,
       turnstileSiteKey: env.TURNSTILE_SITE_KEY,
       googleClientId: env.GOOGLE_OAUTH_CLIENT_ID,
@@ -258,7 +253,6 @@ async function route(req, env, ctx) {
     const name = String(b.name || "").trim().slice(0, 60) || email.split("@")[0];
     const u = await env.DB.prepare("INSERT INTO users (email, password_hash, name, created_at) VALUES (?, ?, ?, ?) RETURNING *")
       .bind(email, await hashPassword(pw), name, now()).first();
-    await attachReferral(env, u, b.referralCode, ip);
     return json(req, env, await sessionFor(env, u));
   }
   if (M === "POST" && p === "/auth/login") {
@@ -303,7 +297,6 @@ async function route(req, env, ctx) {
       if (u) u = await env.DB.prepare("UPDATE users SET google_id = ?, name = COALESCE(NULLIF(name,''), ?) WHERE id = ? RETURNING *").bind(info.sub, info.name || "", u.id).first();
       else {
         u = await env.DB.prepare("INSERT INTO users (email, name, google_id, created_at) VALUES (?, ?, ?, ?) RETURNING *").bind(email, (info.name || email.split("@")[0]).slice(0, 60), info.sub, now()).first();
-        await attachReferral(env, u, b.referralCode, ip);
       }
     }
     return json(req, env, await sessionFor(env, u));
@@ -318,7 +311,7 @@ async function route(req, env, ctx) {
     const u = await requireUser(req, env);
     await rateLimit(env, "order:" + u.id, 20, 3600e3);
     const b = await body(req);
-    const pkg = PACKAGES[b.packageId];
+    const pkg = b.packageId === 'sixmonth' ? PACKAGES.sixmonth : null;
     if (!pkg) fail(400, "bad_package", "Unknown package");
     const xu = normX(b.xUsername);
     if (!/^[a-z0-9_]{1,15}$/.test(xu)) fail(400, "bad_username", "Enter a valid X username (letters, numbers, _ - max 15)");
