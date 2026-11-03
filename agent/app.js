@@ -10,15 +10,8 @@ const nd = (t) => String(t).replace(/\s*[\u2014\u2013]\s*/g, ", ");
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmtDate = (t) => t ? new Date(t).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "-";
 const fmtDT = (t) => t ? new Date(t).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
-const FALLBACK_PACKAGES = [
-  { id: "starter", name: "Starter", price: 5, keys: 1, months: 3 },
-  { id: "standard", name: "Standard", price: 7, keys: 1, months: 6, badge: "Save 30%" },
-  { id: "bestvalue", name: "Best Value", price: 10, keys: 1, months: 12, badge: "Best Value · Save 55%" }
-];
-let CFG = { packages: FALLBACK_PACKAGES, extensionUrl: "#", supportUrl: SUPPORT, orderMinutes: 30 };
-const incomingRef=new URLSearchParams(location.search).get("ref");
-if(incomingRef && /^[A-Fa-f0-9]{16}$/.test(incomingRef))sessionStorage.setItem("fxa_referral",incomingRef.toUpperCase());
-if(document.getElementById("referralCode"))document.getElementById("referralCode").value=sessionStorage.getItem("fxa_referral")||"";
+const FALLBACK_PACKAGES = [{ id: "sixmonth", name: "Fix Access", price: 2, keys: 1, months: 6 }];
+let CFG = { packages: [], extensionUrl: "#", supportUrl: SUPPORT, orderMinutes: 30 };
 let USER = null, pendingPlan = null, order = null, timerId = 0, tsWidget = null, lastReceipt = null, KEYS = [];
 
 /* ---------- api ---------- */
@@ -104,7 +97,7 @@ async function submitAuth(e) {
   if (password.length < 8) return setMsg(f, "Password must be at least 8 characters", "err");
   setMsg(f, ""); busy(btn, true);
   try {
-    const d = await api(authMode === "signup" ? "/auth/signup" : "/auth/login", { body: authMode === "signup" ? { email, password, name, referralCode: f.referralCode.value.trim() } : { email, password } });
+    const d = await api(authMode === "signup" ? "/auth/signup" : "/auth/login", { body: authMode === "signup" ? { email, password, name } : { email, password } });
     setSession(d); f.reset(); pwStrength(""); closeModal("authModal");
     toast(authMode === "signup" ? "Account created 🎉" : "Welcome back!");
     afterLogin();
@@ -121,7 +114,6 @@ const b64url = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replac
 const rand = (n) => b64url(crypto.getRandomValues(new Uint8Array(n)));
 async function googleLogin() {
   if (!CFG.googleClientId || !CFG.googleRedirectUri) { toast("Google sign-in is not available right now"); return; }
-  sessionStorage.setItem("fxa_referral",$("#referralCode").value.trim());
   const state = rand(16), verifier = rand(48);
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
   sessionStorage.setItem("fxa_g_state", state);
@@ -132,22 +124,13 @@ async function googleLogin() {
 }
 
 /* ---------- pricing ---------- */
-const FEATS = ["Your API or Fix Credits", "300 welcome credits once", "Auto-Scroll like & comment", "Link Engage (bulk links)", "Profile follow-up + Like Engage", "PC + Android phone", "Works with 1 X account"];
+const FEATS = ["500 welcome credits once", "Your API or Fix Credits", "All bot modes", "PC + Android phone", "One X account"];
 function renderPricing() {
-  const pk = (CFG.packages && CFG.packages.length ? CFG.packages : FALLBACK_PACKAGES);
-  const base = pk[0] ? pk[0].price / pk[0].months : 0;
-  $("#pricingGrid").innerHTML = pk.map((p, i) => {
-    const per = (p.price / p.months).toFixed(2);
-    const featured = p.id === "bestvalue";
-    const badge = p.badge ? `<span class="badge${featured ? "" : " save"}">${esc(p.badge)}</span>` : "";
-    return `<div class="card plan reveal${featured ? " featured" : ""}">${badge}
-      <span class="plan-name">${esc(p.name)}</span>
-      <div class="plan-price"><b>$${esc(p.price)}</b><span>USDT</span></div>
-      <div class="plan-sub">${p.months} months access · $${per}/month${i && base ? "" : ""}</div>
-      <ul>${[`${p.keys} Access Key · ${p.months} months`, ...FEATS].map((f) => `<li><i class="fa-solid fa-check"></i>${esc(f)}</li>`).join("")}</ul>
-      <button class="btn ${featured ? "btn-primary" : "btn-ghost"} btn-block" data-buy="${esc(p.id)}"><i class="fa-solid fa-key"></i> Buy ${esc(p.name)}</button>
-    </div>`;
-  }).join("");
+  // Show the new paid offer only when the Worker advertises it; never guess a server price.
+  const p = (CFG.packages || []).find(x => x.id === "sixmonth" && x.price === 2 && x.months === 6);
+  const paid = p ? `<div class="card plan featured"><span class="badge">6 months</span><span class="plan-name">Fix Access</span><div class="plan-price"><b>$2</b><span>USDT</span></div><div class="plan-sub">Six months of access</div><ul>${FEATS.map(f => `<li><i class="fa-solid fa-check"></i>${esc(f)}</li>`).join("")}</ul><button class="btn btn-primary btn-block" data-buy="sixmonth"><i class="fa-solid fa-key"></i> Buy Fix Access</button></div>` : `<div class="card plan"><span class="plan-name">Fix Access</span><p>Paid checkout is being updated. Please contact support.</p></div>`;
+  const free = `<div class="card plan"><span class="plan-name">Free access</span><div class="plan-price"><b>$0</b></div><div class="plan-sub">Available by approval</div><ul><li><i class="fa-solid fa-check"></i>Contact us and answer a few questions to confirm X account ownership</li><li><i class="fa-solid fa-check"></i>500 welcome credits for an approved new key</li><li><i class="fa-solid fa-check"></i>Never share your password or verification code</li></ul><a class="btn btn-ghost btn-block" href="https://t.me/Fixasif" target="_blank" rel="noopener noreferrer">Contact us for free access</a></div>`;
+  $("#pricingGrid").innerHTML = paid + free;
   observeReveal();
 }
 
@@ -157,12 +140,12 @@ function showStep(n) {
   $$(".stepper span").forEach((s, i) => { s.classList.toggle("active", i + 1 === n); s.classList.toggle("done", i + 1 < n); });
 }
 function startCheckout(planId) {
-  const p = planId==='trial'?{id:'trial',name:'15-day trial',days:15,price:0}:(CFG.packages || FALLBACK_PACKAGES).find((x) => x.id === planId);
+  const p = (CFG.packages || []).find(x => x.id === 'sixmonth' && planId === 'sixmonth' && x.price === 2 && x.months === 6);
   if (!p) return;
   if (!USER) { pendingPlan = planId; openAuth("signup"); toast("Create an account (or log in) to buy"); return; }
   order = { plan: p };
-  $("#payPlan").textContent = p.id==='trial'?'15-day trial · No payment · No free AI credits':`${p.name}: ${p.months} months · ${p.price} USDT`;
-  const trial=p.id==='trial';$('#trialFields').hidden=!trial;$('#trialResult').hidden=true;$('#xUserBtn').hidden=false;$('#xUserBtn').textContent=trial?'Claim 15-day trial':'Continue to payment';$('#xUserForm').trialOwn.checked=false;
+  $("#payPlan").textContent = `${p.name}: ${p.months} months · ${p.price} USDT`;
+  $('#xUserBtn').hidden=false;$('#xUserBtn').textContent='Continue to payment';
   showStep(1);
   $("#xUserForm").hidden = false; $("#payDetails").hidden = true; setMsg($("#xUserForm"), "");
   $("#xUserForm").xUsername.value = localStorage.getItem("fxa_last_xuser") || "";
@@ -177,13 +160,6 @@ async function submitXUser(e) {
   if (!/^[a-z0-9_]{1,15}$/.test(xu)) return setMsg(f, "Enter a valid X username (letters, numbers, _, max 15)", "err");
   setMsg(f, ""); const btn = $("#xUserBtn"); busy(btn, true, "Creating your order…");
   try {
-    if(order.plan.id==='trial'){
-      if(!f.trialOwn.checked)throw new Error('Confirm that this is your own X account first.');
-      const d=await api('/trial/claim',{body:{xUsername:xu,coupon:f.trialCoupon.value}});
-      $('#trialKey').textContent=d.accessKey;$('#trialExpiry').textContent='Expires: '+fmtDT(d.expiresAt);$('#trialResult').hidden=false;$('#xUserBtn').hidden=true;
-      $('#copyTrialKey').onclick=()=>copy(d.accessKey,'Access Key copied');$('#trialDashboard').onclick=()=>closeModal('payModal');localStorage.setItem('fxa_last_xuser',xu);
-      setMsg(f,'Trial ready. Copy your key, open the extension, and log in with @'+xu+'.','ok');return;
-    }
     const d = await api("/create-order", { body: { packageId: order.plan.id, xUsername: xu } });
     order = { ...order, ...d };
     localStorage.setItem("fxa_last_xuser", xu);

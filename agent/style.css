@@ -130,7 +130,7 @@ h3{font-size:1.08rem;color:#fff;font-weight:700;margin-bottom:6px}
 .steps li{padding:24px}
 .step-n{font-size:1.9rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;display:block;margin-bottom:8px}
 
-.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.pricing{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;align-items:stretch}
 .plan{padding:30px 26px;display:flex;flex-direction:column;position:relative;transition:transform .25s,box-shadow .25s}
 .plan:hover{transform:translateY(-5px)}
 .plan.featured{border-color:rgba(167,139,250,.55);box-shadow:0 0 0 1px rgba(167,139,250,.35),0 30px 70px rgba(var(--arg),.32);background:linear-gradient(180deg,rgba(139,92,246,.18),rgba(59,130,246,.05)),var(--glass)}
