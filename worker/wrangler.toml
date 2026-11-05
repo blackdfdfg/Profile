@@ -25,3 +25,11 @@ EXTENSION_URL = "https://chromewebstore.google.com/detail/aflcefboffcaidnhpdpipk
 
 [build]
 command = "npm run build"
+
+# Choose an account-unique namespace before deployment; edge counters are approximate.
+[[ratelimits]]
+name = "CREDIT_AUTH_RATE"
+namespace_id = "350890231"
+  [ratelimits.simple]
+  limit = 600
+  period = 60
