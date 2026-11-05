@@ -227,3 +227,55 @@ test('verified old and new paid orders deliver their original terms and credits 
    }
  }finally{globalThis.fetch=prior;}
 });
+
+test('edge authentication avoids routine D1 auth writes and preserves debit, retries and settlement',async()=>{
+ const env=setup();await grantWelcome(env,1);let calls=0;
+ env.CREDIT_AUTH_RATE={limit:async({key:k})=>{assert.equal(k,'credit-key:10.1.1.1');calls++;return {success:true}}};
+ const b={accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'A real post'};
+ assert.equal((await call(env,'/credits/generate',b)).data.balance,499);
+ assert.equal((await call(env,'/credits/generate',b)).data.balance,499);
+ assert.equal((await call(env,'/credits/settle',{...b,posted:true})).data.balance,499);
+ assert.equal((await call(env,'/credits/settle',{...b,posted:false})).data.balance,499);
+ assert.equal((await call(env,'/credits/balance',{accessKey:key})).data.balance,499);
+ assert.equal(calls,5);
+ assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM rate_limits WHERE k LIKE 'credit-key:%'").get().n,0);
+ assert.equal(env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='ai:1'").get().count,2);
+ assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM credit_ledger WHERE reason='welcome'").get().n,1);
+});
+test('edge auth enforces global D1 limiter for all credential failures',async()=>{
+ const env=setup();env.CREDIT_AUTH_RATE={limit:async()=>({success:true})};
+ const generate={accessKey:key,xUsername:'wrong',requestId:crypto.randomUUID(),tweetText:'post'};
+ assert.equal((await call(env,'/credits/balance',{accessKey:'wrong'})).status,401);
+ assert.equal((await call(env,'/credits/generate',generate)).status,403);
+ env.DB.db.exec('UPDATE access_keys SET expires_at=1');assert.equal((await call(env,'/credits/balance',{accessKey:key})).status,403);
+ env.DB.db.exec("UPDATE access_keys SET expires_at=9999999999999,x_username=NULL");assert.equal((await call(env,'/credits/balance',{accessKey:key})).status,403);
+ assert.equal(env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='credit-key:10.1.1.1'").get().count,4);
+ env.DB.db.exec("UPDATE rate_limits SET count=600 WHERE k='credit-key:10.1.1.1'");
+ assert.equal((await call(env,'/credits/balance',{accessKey:'wrong'})).status,429);
+ assert.equal(env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='credit-key:10.1.1.1'").get().count,600);
+});
+test('edge limiter deny, missing binding, failure and malformed results are safe',async()=>{
+ for(const mode of ['deny','missing','throw','malformed']) {
+  const env=setup();await grantWelcome(env,1);
+  if(mode==='deny')env.CREDIT_AUTH_RATE={limit:async()=>({success:false})};
+  if(mode==='throw')env.CREDIT_AUTH_RATE={limit:async()=>{throw Error('unavailable')}};
+  if(mode==='malformed')env.CREDIT_AUTH_RATE={limit:async()=>({})};
+  const result=await call(env,'/credits/balance',{accessKey:key});
+  assert.equal(result.status,mode==='deny'?429:200,mode);
+  const row=env.DB.db.prepare("SELECT count FROM rate_limits WHERE k='credit-key:10.1.1.1'").get();
+  assert.equal(row?.count,mode==='deny'?undefined:1,mode);
+ }
+});
+test('edge authentication retains exactly-once refunds and protects limited free wallets',async()=>{
+ const env=setup();env.CREDIT_AUTH_RATE={limit:async()=>({success:true})};
+ for(let i=0;i<10;i++){
+  const b={accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'post'};
+  assert.equal((await call(env,'/credits/generate',b)).status,200);
+  assert.equal((await call(env,'/credits/settle',{...b,posted:false})).status,200);
+  assert.equal((await call(env,'/credits/settle',{...b,posted:false})).status,200);
+ }
+ const r=await call(env,'/credits/generate',{accessKey:key,xUsername:'alice',requestId:crypto.randomUUID(),tweetText:'post'});
+ assert.equal(r.status,429);assert.equal(r.data.error,'refund_limit');
+ assert.equal(env.DB.db.prepare('SELECT balance FROM credit_wallets').get().balance,500);
+ assert.equal(env.DB.db.prepare("SELECT count(*) AS n FROM credit_ledger WHERE reason='post_failed'").get().n,10);
+});
