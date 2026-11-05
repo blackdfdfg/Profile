@@ -135,12 +135,28 @@ export async function featureRoute(req,env,ctx,a) {
  }
 
  async function keyAuth(b,usernameRequired=false) {
-   await rateLimit(env,'credit-key:' + clientIp(req),600,600000);
+   const rateKey='credit-key:' + clientIp(req);
+   // Local, approximate edge limit for routine authenticated traffic. If the
+   // binding is absent or errors, retain the original exact D1 limiter.
+   let edgeAllowed=false, edgeResult=null;
+   if(env.CREDIT_AUTH_RATE && typeof env.CREDIT_AUTH_RATE.limit==='function') {
+     try { edgeResult=await env.CREDIT_AUTH_RATE.limit({key:rateKey}); }
+     catch { edgeResult=null; }
+     if(edgeResult && edgeResult.success===false) fail(429,'rate_limited','Too many attempts. Please wait and try again.');
+     edgeAllowed=!!(edgeResult && edgeResult.success===true);
+   }
+   if(!edgeAllowed) await rateLimit(env,rateKey,600,600000);
    const k=await env.DB.prepare('SELECT k.*,w.key_id AS wallet_present,w.balance AS wallet_balance,w.free_granted AS wallet_free,w.purchased AS wallet_purchased,w.used AS wallet_used FROM access_keys k LEFT JOIN credit_wallets w ON w.key_id=k.id WHERE k.key=?').bind(String(b.accessKey||'').trim().toUpperCase()).first();
-   if (!k || k.status!=='sold') fail(401,'invalid_key','Enter a valid purchased Access Key');
-   if (!k.expires_at || k.expires_at<=now()) fail(403,'expired','Your Access Key has expired');
-   if (!k.x_username) fail(403,'unbound','Log in to the extension first');
-   if (usernameRequired && normX(b.xUsername)!==normX(k.x_username)) fail(403,'bound_other','This key belongs to another X account');
+   // Invalid, expired, unbound and identity-mismatched credentials still use
+   // the globally strict D1 limiter; never double-count on the fallback path.
+   async function reject(status,code,message) {
+     if(edgeAllowed) await rateLimit(env,rateKey,600,600000);
+     fail(status,code,message);
+   }
+   if (!k || k.status!=='sold') await reject(401,'invalid_key','Enter a valid purchased Access Key');
+   if (!k.expires_at || k.expires_at<=now()) await reject(403,'expired','Your Access Key has expired');
+   if (!k.x_username) await reject(403,'unbound','Log in to the extension first');
+   if (usernameRequired && normX(b.xUsername)!==normX(k.x_username)) await reject(403,'bound_other','This key belongs to another X account');
    if(!k.wallet_present)await grantWelcome(env,k.id); return k;
  }
  async function balance(k,cached=false) {
